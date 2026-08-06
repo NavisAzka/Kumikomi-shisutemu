@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:www.instructables.com)",
+      "WebFetch(domain:github.com)"
+    ]
+  }
+}

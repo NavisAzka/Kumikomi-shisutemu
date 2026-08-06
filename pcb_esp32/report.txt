@@ -1,0 +1,13 @@
+Info: X scale constrained.
+Info: Y scale constrained.
+Plotted to 'C:\N\Praktikum_embed\pcb_esp32\pcb_esp32-F_Cu.gbr'.
+Plotted to 'C:\N\Praktikum_embed\pcb_esp32\pcb_esp32-B_Cu.gbr'.
+Plotted to 'C:\N\Praktikum_embed\pcb_esp32\pcb_esp32-F_Paste.gbr'.
+Plotted to 'C:\N\Praktikum_embed\pcb_esp32\pcb_esp32-B_Paste.gbr'.
+Plotted to 'C:\N\Praktikum_embed\pcb_esp32\pcb_esp32-F_Silkscreen.gbr'.
+Plotted to 'C:\N\Praktikum_embed\pcb_esp32\pcb_esp32-B_Silkscreen.gbr'.
+Plotted to 'C:\N\Praktikum_embed\pcb_esp32\pcb_esp32-F_Mask.gbr'.
+Plotted to 'C:\N\Praktikum_embed\pcb_esp32\pcb_esp32-B_Mask.gbr'.
+Plotted to 'C:\N\Praktikum_embed\pcb_esp32\pcb_esp32-Edge_Cuts.gbr'.
+Created Gerber job file 'C:\N\Praktikum_embed\pcb_esp32\pcb_esp32-job.gbrjob'.
+Info: Done.
