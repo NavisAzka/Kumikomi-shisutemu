@@ -2,11 +2,34 @@
 # SENSOR BERDASARKAN BASIS PENGUKURAN & AKTUATOR MOTOR
 
 **Mata Kuliah:** Praktikum Mikrokontroler & Embedded System
-**Alokasi Waktu:** 6 x Percobaan (@ 100–150 menit)
+**Alokasi Waktu:** 5 x Percobaan (@ 100–150 menit)
 **Platform:** ESP32 (Framework Arduino)
 **IDE:** VSCode + PlatformIO
 
-> **Catatan:** Modul ini melanjutkan penggunaan ESP32 dengan framework Arduino seperti pada Percobaan 3–4 Modul 1. Langkah instalasi VSCode, PlatformIO, dan driver USB-to-Serial tidak diulang di sini — lihat kembali **Modul 1, Bagian D**.
+> **Catatan:** Modul ini melanjutkan penggunaan ESP32 dengan framework Arduino seperti pada Percobaan 3–5 Modul 1. Langkah instalasi VSCode, PlatformIO, dan driver USB-to-Serial tidak diulang di sini — lihat **[setup_vscode_platformio.md](setup_vscode_platformio.md)**.
+
+---
+
+## Daftar Isi
+- [A. Capaian Pembelajaran](#a-capaian-pembelajaran)
+- [B. Alat dan Bahan](#b-alat-dan-bahan)
+- [C. Dasar Teori](#c-dasar-teori)
+  - [C.1 ADC pada ESP32](#c1-adc-pada-esp32)
+  - [C.2 Sensor Resistif — Prinsip Pembagi Tegangan](#c2-sensor-resistif--prinsip-pembagi-tegangan)
+  - [C.3 Sensor Kapasitif](#c3-sensor-kapasitif)
+  - [C.4 Sensor Induktif](#c4-sensor-induktif)
+  - [C.5 Sensor Basis Lain (Akustik & Optik)](#c5-sensor-basis-lain-akustik--optik)
+  - [C.6 PWM (Pulse Width Modulation) — Kontrol Kecepatan Motor DC](#c6-pwm-pulse-width-modulation--kontrol-kecepatan-motor-dc)
+  - [C.7 Kontrol Posisi Motor Servo](#c7-kontrol-posisi-motor-servo)
+  - [C.8 Motor Stepper](#c8-motor-stepper)
+- [D. Persiapan Sebelum Praktikum](#d-persiapan-sebelum-praktikum)
+- [E. Kegiatan Praktikum](#e-kegiatan-praktikum)
+  - [PERCOBAAN 1 — Sensor Resistif, Kapasitif, dan Induktif](#percobaan-1--sensor-resistif-kapasitif-dan-induktif)
+  - [PERCOBAAN 2 — Sensor Basis Lain (Ultrasonik & IR Obstacle)](#percobaan-2--sensor-basis-lain-ultrasonik--ir-obstacle)
+  - [PERCOBAAN 3 — Aktuator Motor DC](#percobaan-3--aktuator-motor-dc)
+  - [PERCOBAAN 4 — Aktuator Motor Stepper](#percobaan-4--aktuator-motor-stepper)
+  - [PERCOBAAN 5 — Aktuator Motor Servo](#percobaan-5--aktuator-motor-servo)
+- [F. Referensi](#f-referensi)
 
 ---
 
@@ -33,7 +56,7 @@ Setelah menyelesaikan Modul 2, praktikan mampu:
 | 4 | Kabel jumper male-male | — | secukupnya |
 | 5 | LDR (Light Dependent Resistor) | — | 1 |
 | 6 | Resistor | 10kΩ (pembagi tegangan LDR), 220Ω (LED) | secukupnya |
-| 7 | Kabel/kawat sebagai probe capacitive touch | — | 1 |
+| 7 | Modul touch sensor TTP223 | Capacitive touch sensor, output digital | 1 |
 | 8 | Hall effect sensor module | mis. A3144/KY-003 | 1 |
 | 9 | Magnet kecil | untuk uji hall effect | 1 |
 | 10 | Sensor ultrasonik | HC-SR04 | 1 |
@@ -62,7 +85,7 @@ Sensor resistif (LDR, thermistor, potensiometer) bekerja dengan mengubah nilai r
 ```
 
 ### C.3 Sensor Kapasitif
-Sensor kapasitif mendeteksi besaran fisik (sentuhan, kelembapan, jarak dekat) melalui **perubahan nilai kapasitansi**. Pada praktikum ini digunakan fitur **touch sensor bawaan ESP32**, tersedia pada beberapa pin GPIO tertentu (T0–T9), yang dapat langsung mendeteksi sentuhan tanpa komponen tambahan, memanfaatkan perubahan kapasitansi tubuh manusia terhadap pin tersebut. Sensor kapasitif lain (mis. capacitive soil moisture, capacitive proximity) bekerja dengan prinsip serupa — mengukur perubahan kapasitansi pada elektroda sensor — namun umumnya berbentuk modul terpisah dengan output analog.
+Sensor kapasitif mendeteksi besaran fisik (sentuhan, kelembapan, jarak dekat) melalui **perubahan nilai kapasitansi**. Pada praktikum ini digunakan modul **touch sensor TTP223** — modul berbasis IC TTP223 yang sudah mengintegrasikan rangkaian deteksi kapasitansi dan pembanding ambang batas (threshold) secara internal, sehingga cukup menghasilkan **output digital HIGH/LOW** siap pakai (umumnya aktif HIGH saat pad disentuh) tanpa perlu kalibrasi nilai analog secara manual — berbeda dengan fitur *touch* bawaan ESP32 (`touchRead()`) yang mengembalikan nilai mentah dan memerlukan penentuan threshold sendiri. Sensor kapasitif lain (mis. capacitive soil moisture, capacitive proximity) bekerja dengan prinsip serupa — mengukur perubahan kapasitansi pada elektroda sensor — namun umumnya berbentuk modul terpisah dengan output analog.
 
 ### C.4 Sensor Induktif
 Sensor induktif mendeteksi objek logam atau perubahan medan magnet melalui **perubahan induktansi/medan magnet**. Pada praktikum ini digunakan **hall effect sensor**, yang mendeteksi keberadaan/kekuatan medan magnet secara langsung — umum digunakan untuk mendeteksi posisi magnet atau kecepatan putar (bersama magnet pada objek berputar). Contoh sensor induktif lain adalah *inductive proximity sensor*, yang menghasilkan medan elektromagnetik osilasi dan mendeteksi benda logam melalui redaman (eddy current) pada medan tersebut.
@@ -72,9 +95,9 @@ Sensor induktif mendeteksi objek logam atau perubahan medan magnet melalui **per
 - **Inframerah/optik:** mendeteksi objek berdasarkan pantulan cahaya inframerah; umum digunakan sebagai sensor jarak dekat/obstacle dengan output digital
 
 ### C.6 PWM (Pulse Width Modulation) — Kontrol Kecepatan Motor DC
-PWM adalah teknik menghasilkan sinyal digital yang menyerupai sinyal analog dengan mengatur **duty cycle** (persentase waktu sinyal HIGH dalam satu periode). Semakin besar duty cycle, semakin besar "rata-rata" tegangan yang dirasakan oleh beban (mis. motor DC), sehingga kecepatan putarnya meningkat. Pada ESP32 framework Arduino, PWM diakses melalui API **LEDC**. Sejak **Arduino-ESP32 core versi 3.x**, API ini disederhanakan menjadi berbasis pin — `ledcAttach(pin, freq, resolution)` untuk mengonfigurasi sekaligus menghubungkan PWM ke suatu pin, dan `ledcWrite(pin, duty)` untuk mengatur duty cycle-nya — menggantikan API lama berbasis channel manual (`ledcSetup()`/`ledcAttachPin()`) pada core versi 2.x. Arah putar motor DC diatur secara terpisah melalui driver motor (mis. L298N) menggunakan dua pin digital (IN1/IN2).
+PWM adalah teknik menghasilkan sinyal digital yang menyerupai sinyal analog dengan mengatur **duty cycle** (persentase waktu sinyal HIGH dalam satu periode). Semakin besar duty cycle, semakin besar "rata-rata" tegangan yang dirasakan oleh beban (mis. motor DC), sehingga kecepatan putarnya meningkat. Pada ESP32 framework Arduino, PWM diakses melalui API **LEDC** berbasis **channel**: `ledcSetup(channel, freq, resolution)` untuk mengonfigurasi sebuah channel PWM (frekuensi & resolusi), `ledcAttachPin(pin, channel)` untuk menghubungkan channel tersebut ke pin fisik, dan `ledcWrite(channel, duty)` untuk mengatur duty cycle-nya berdasarkan nomor channel (bukan nomor pin). Arah putar motor DC diatur secara terpisah melalui driver motor (mis. L298N) menggunakan dua pin digital (IN1/IN2).
 
-> **Catatan versi:** Seluruh contoh kode PWM pada modul ini (dan modul-modul lain dalam rangkaian praktikum) mengasumsikan **Arduino-ESP32 core versi 3.x ke atas** (ESP-IDF 5.x), agar konsisten dengan driver ADC continuous/DMA yang digunakan pada Modul 3. Pastikan `platformio.ini` tidak mengunci platform `espressif32` ke versi lama — biarkan tanpa versi spesifik atau gunakan versi terbaru agar API LEDC baru tersedia.
+> **Catatan versi:** Seluruh contoh kode pada modul ini (dan modul-modul lain dalam rangkaian praktikum) menggunakan **platform PlatformIO resmi `espressif32`** tanpa mengunci versi khusus, yang secara default membawa **Arduino-ESP32 core versi 2.0.x**. API LEDC berbasis channel (`ledcSetup`/`ledcAttachPin`) adalah API yang tersedia pada core versi ini. Core versi 3.x (dengan API LEDC berbasis pin seperti `ledcAttach()`) memerlukan platform komunitas terpisah (mis. fork *pioarduino*) dan **tidak dibahas** pada praktikum ini agar tetap konsisten dan kompatibel dengan library lain (mis. ESP32Servo) yang digunakan di modul-modul ini.
 
 ### C.7 Kontrol Posisi Motor Servo
 Motor servo juga dikendalikan menggunakan sinyal PWM, namun dengan prinsip yang berbeda dari kontrol kecepatan motor DC — pada servo, **lebar pulsa (pulse width)** itu sendiri yang menentukan posisi sudut, bukan rata-rata duty cycle. Umumnya sinyal kontrol servo memiliki periode 20ms (frekuensi 50Hz), dengan lebar pulsa sekitar 1ms merepresentasikan sudut 0° dan 2ms merepresentasikan sudut 180°. Pada framework Arduino, detail ini diabstraksi oleh library seperti **ESP32Servo**, sehingga cukup memanggil fungsi `.write(angle)` untuk menggerakkan servo ke sudut tertentu.
@@ -90,7 +113,7 @@ Berbeda dengan motor DC yang berputar kontinu, motor stepper bergerak dalam **la
 
 ## D. Persiapan Sebelum Praktikum
 
-1. Pastikan PlatformIO sudah terinstal (lihat **Modul 1, Bagian D.1–D.2**)
+1. Pastikan PlatformIO sudah terinstal (lihat **[setup_vscode_platformio.md](setup_vscode_platformio.md)**)
 2. Buat project baru untuk Modul 2:
    - Name: `modul2-sensor-aktuator`
    - Board: **"Espressif ESP32 Dev Module"**
@@ -102,7 +125,7 @@ Berbeda dengan motor DC yang berputar kontinu, motor stepper bergerak dalam **la
    board = esp32dev
    framework = arduino
    ```
-4. Untuk Percobaan 6 (Motor Servo), tambahkan library **ESP32Servo** melalui PlatformIO Library Manager atau tambahkan pada `platformio.ini`:
+4. Untuk Percobaan 5 (Motor Servo), tambahkan library **ESP32Servo** melalui PlatformIO Library Manager atau tambahkan pada `platformio.ini`:
    ```ini
    lib_deps = madhephaestus/ESP32Servo@^3.0.0
    ```
@@ -111,35 +134,58 @@ Berbeda dengan motor DC yang berputar kontinu, motor stepper bergerak dalam **la
 
 ## E. Kegiatan Praktikum
 
-### PERCOBAAN 1 — Sensor Resistif
+### PERCOBAAN 1 — Sensor Resistif, Kapasitif, dan Induktif
 
 **Tujuan:**
-Mahasiswa mampu memahami dan mengimplementasikan pembacaan sensor resistif (LDR) melalui ADC ESP32.
+Mahasiswa mampu memahami dan mengimplementasikan pembacaan sensor resistif (LDR melalui ADC), kapasitif (touch sensor TTP223), dan induktif (hall effect sensor).
 
 **Skema Rangkaian:**
 
 | Komponen | Pin ESP32 | Keterangan |
 |---|---|---|
 | LDR (pembagi tegangan dengan resistor 10kΩ) | GPIO 34 | Titik tengah pembagi tegangan ke ADC |
+| Modul TTP223 — OUT | GPIO 4 | Output digital, umumnya aktif HIGH saat pad disentuh |
+| Modul TTP223 — VCC/GND | 3.3V, GND | Sesuai datasheet modul |
+| Hall effect sensor module | GPIO 26 | Output digital |
+
+**`platformio.ini`:**
+```ini
+[env:esp32dev]
+platform = espressif32
+board = esp32dev
+framework = arduino
+```
 
 **Langkah Kerja:**
 1. Rangkai LDR sebagai pembagi tegangan sesuai skema, hubungkan titik tengah ke GPIO 34
-2. Tulis program pembacaan nilai ADC dan tegangan LDR
-3. Amati perubahan nilai saat sensor ditutup (gelap) dan disinari cahaya (terang), catat rentang nilai minimum-maksimum yang terbaca
+2. Rangkai modul TTP223 (VCC, GND, dan OUT ke GPIO 4)
+3. Rangkai hall effect sensor module pada GPIO 26
+4. Upload program gabungan di bawah, amati ketiga pembacaan sekaligus pada Serial Monitor
+5. Uji LDR dengan menutup/menyinari sensor, uji TTP223 dengan menyentuh pad sensor, dan uji hall effect dengan mendekatkan magnet — catat rentang/status hasil masing-masing
 
-**Kode Program (LDR):**
+**Kode Program (LDR, TTP223, & Hall Effect):**
 ```cpp
 #define LDR_PIN 34
+#define TOUCH_PIN 4  // OUT modul TTP223
+#define HALL_PIN 26
 
 void setup() {
   Serial.begin(115200);
+  pinMode(TOUCH_PIN, INPUT);
+  pinMode(HALL_PIN, INPUT);
 }
 
 void loop() {
   int ldrRaw = analogRead(LDR_PIN);
   float ldrVoltage = ldrRaw * (3.3 / 4095.0);
 
-  Serial.printf("LDR raw: %d | Tegangan: %.2fV\n", ldrRaw, ldrVoltage);
+  bool touched = (digitalRead(TOUCH_PIN) == HIGH); // TTP223 umumnya aktif HIGH
+  bool magnetDetected = (digitalRead(HALL_PIN) == LOW); // umumnya aktif LOW, cek datasheet modul
+
+  Serial.printf("LDR: %d (%.2fV) | Touch (TTP223): %s | Hall Effect: %s\n",
+                ldrRaw, ldrVoltage,
+                touched ? "TERSENTUH" : "idle",
+                magnetDetected ? "MAGNET TERDETEKSI" : "idle");
   delay(300);
 }
 ```
@@ -149,60 +195,12 @@ void loop() {
 |---|---|
 | `analogRead(LDR_PIN)` | Membaca nilai ADC 12-bit (0–4095) pada pin yang terhubung ke titik tengah pembagi tegangan LDR |
 | `ldrVoltage = ldrRaw * (3.3 / 4095.0)` | Mengonversi nilai ADC menjadi tegangan (volt) berdasarkan referensi ADC 3.3V dan resolusi 12-bit |
-
----
-
-### PERCOBAAN 2 — Sensor Kapasitif & Induktif
-
-**Tujuan:**
-Mahasiswa mampu memahami dan mengimplementasikan pembacaan sensor kapasitif (touch sensor bawaan ESP32) dan sensor induktif (hall effect sensor).
-
-**Skema Rangkaian:**
-
-| Komponen | Pin ESP32 | Keterangan |
-|---|---|---|
-| Capacitive touch (probe kabel) | GPIO 4 (T0) | Menggunakan fitur touch sensor bawaan ESP32 |
-| Hall effect sensor module | GPIO 26 | Output digital |
-
-**Langkah Kerja:**
-1. Sambungkan kabel probe ke GPIO 4 (pin touch T0), uji fitur capacitive touch bawaan ESP32
-2. Amati perubahan nilai `touchRead()` saat probe disentuh dibanding saat tidak disentuh, tentukan nilai threshold yang sesuai
-3. Rangkai hall effect sensor pada GPIO 26, uji deteksi dengan mendekatkan magnet
-
-**Kode Program (Capacitive Touch & Hall Effect):**
-```cpp
-#define TOUCH_PIN 4       // GPIO 4 = Touch0 (T0)
-#define HALL_PIN 26
-#define TOUCH_THRESHOLD 30 // sesuaikan berdasarkan hasil pengamatan
-
-void setup() {
-  Serial.begin(115200);
-  pinMode(HALL_PIN, INPUT);
-}
-
-void loop() {
-  int touchValue = touchRead(TOUCH_PIN);
-  bool touched = touchValue < TOUCH_THRESHOLD;
-
-  bool magnetDetected = (digitalRead(HALL_PIN) == LOW); // umumnya aktif LOW, cek datasheet modul
-
-  Serial.printf("Touch: %d (%s) | Hall Effect: %s\n",
-                touchValue, touched ? "TERSENTUH" : "idle",
-                magnetDetected ? "MAGNET TERDETEKSI" : "idle");
-  delay(300);
-}
-```
-
-**Penjelasan Kode:**
-| Bagian | Penjelasan |
-|---|---|
-| `touchRead(TOUCH_PIN)` | Fungsi bawaan ESP32 untuk membaca nilai kapasitansi pada pin touch — nilai semakin kecil saat disentuh (bukan digitalRead biasa) |
-| `TOUCH_THRESHOLD` | Nilai ambang batas untuk menentukan status tersentuh/tidak, ditentukan berdasarkan hasil kalibrasi/pengamatan langsung |
+| `digitalRead(TOUCH_PIN) == HIGH` | Modul TTP223 sudah mengeluarkan output digital siap pakai — tidak perlu `touchRead()` maupun threshold manual seperti fitur touch bawaan ESP32 |
 | `digitalRead(HALL_PIN) == LOW` | Sebagian besar modul hall effect bersifat aktif LOW — perlu diverifikasi pada datasheet modul yang digunakan |
 
 ---
 
-### PERCOBAAN 3 — Sensor Basis Lain (Ultrasonik & IR Obstacle)
+### PERCOBAAN 2 — Sensor Basis Lain (Ultrasonik & IR Obstacle)
 
 **Tujuan:**
 Mahasiswa mampu mengimplementasikan pembacaan sensor ultrasonik (basis akustik) dan sensor IR obstacle (basis optik).
@@ -214,6 +212,14 @@ Mahasiswa mampu mengimplementasikan pembacaan sensor ultrasonik (basis akustik) 
 | HC-SR04 — Trig | GPIO 5 | Output dari ESP32 ke sensor |
 | HC-SR04 — Echo | GPIO 18 | Input ke ESP32 (gunakan pembagi tegangan jika sensor 5V) |
 | Sensor IR obstacle | GPIO 19 | Output digital |
+
+**`platformio.ini`:**
+```ini
+[env:esp32dev]
+platform = espressif32
+board = esp32dev
+framework = arduino
+```
 
 **Langkah Kerja:**
 1. Rangkai HC-SR04 sesuai skema, tulis program pengukuran jarak berbasis `pulseIn()`
@@ -277,7 +283,7 @@ void loop() {
 
 ---
 
-### PERCOBAAN 4 — Aktuator Motor DC
+### PERCOBAAN 3 — Aktuator Motor DC
 
 **Tujuan:**
 Mahasiswa mampu mengimplementasikan kontrol kecepatan dan arah putar motor DC menggunakan sinyal PWM.
@@ -289,6 +295,14 @@ Mahasiswa mampu mengimplementasikan kontrol kecepatan dan arah putar motor DC me
 | Driver motor (ENA) | GPIO 25 | Sinyal PWM kecepatan |
 | Driver motor (IN1) | GPIO 26 | Arah putar motor |
 | Driver motor (IN2) | GPIO 27 | Arah putar motor |
+
+**`platformio.ini`:**
+```ini
+[env:esp32dev]
+platform = espressif32
+board = esp32dev
+framework = arduino
+```
 
 **Langkah Kerja:**
 1. Rangkai motor DC melalui driver (mis. L298N) sesuai skema, gunakan catu daya eksternal untuk motor (bukan 5V dari USB langsung)
@@ -305,6 +319,7 @@ Mahasiswa mampu mengimplementasikan kontrol kecepatan dan arah putar motor DC me
 #define IN1 26
 #define IN2 27
 
+const int pwmChannel = 0;
 const int pwmFreq = 1000;
 const int pwmResolution = 8;
 
@@ -315,19 +330,19 @@ int motorSpeed = 150;
 void motorForward(uint8_t speed) {
   digitalWrite(IN1, HIGH);
   digitalWrite(IN2, LOW);
-  ledcWrite(ENA, speed);
+  ledcWrite(pwmChannel, speed);
 }
 
 void motorBackward(uint8_t speed) {
   digitalWrite(IN1, LOW);
   digitalWrite(IN2, HIGH);
-  ledcWrite(ENA, speed);
+  ledcWrite(pwmChannel, speed);
 }
 
 void motorStop() {
   digitalWrite(IN1, LOW);
   digitalWrite(IN2, LOW);
-  ledcWrite(ENA, 0);
+  ledcWrite(pwmChannel, 0);
 }
 
 //================================================
@@ -338,7 +353,8 @@ void setup() {
   pinMode(IN1, OUTPUT);
   pinMode(IN2, OUTPUT);
 
-  ledcAttach(ENA, pwmFreq, pwmResolution); // LEDC API baru (Arduino-ESP32 core 3.x) — channel dikelola otomatis
+  ledcSetup(pwmChannel, pwmFreq, pwmResolution); // konfigurasi channel PWM (core 2.x)
+  ledcAttachPin(ENA, pwmChannel);                // hubungkan channel ke pin ENA
 
   Serial.println("--------------------------------");
   Serial.println("ESP32 Motor DC Test");
@@ -380,14 +396,15 @@ void loop() {
 **Penjelasan Kode:**
 | Bagian | Penjelasan |
 |---|---|
-| `ledcAttach(ENA, pwmFreq, pwmResolution)` | Mengonfigurasi sekaligus menghubungkan PWM (frekuensi 1kHz, resolusi 8-bit) langsung ke pin ENA — pada API LEDC baru, channel dialokasikan otomatis sehingga tidak perlu dikelola manual seperti `ledcSetup()`/`ledcAttachPin()` pada API lama |
-| `ledcWrite(ENA, speed)` | Mengatur nilai duty cycle PWM langsung berdasarkan nomor pin (bukan nomor channel seperti pada API lama) |
+| `ledcSetup(pwmChannel, pwmFreq, pwmResolution)` | Mengonfigurasi channel PWM 0 dengan frekuensi 1kHz dan resolusi 8-bit (nilai duty 0–255) |
+| `ledcAttachPin(ENA, pwmChannel)` | Menghubungkan channel PWM yang telah dikonfigurasi ke pin fisik ENA |
+| `ledcWrite(pwmChannel, speed)` | Mengatur nilai duty cycle PWM berdasarkan nomor **channel** (bukan nomor pin) — karakteristik API LEDC berbasis channel pada core 2.x |
 | `motorForward()` / `motorBackward()` / `motorStop()` | Mengatur kombinasi IN1/IN2 untuk menentukan arah putar, sekaligus nilai PWM untuk kecepatan |
 | `Serial.readStringUntil('\n')` | Membaca perintah teks dari Serial Monitor untuk mengendalikan motor secara interaktif |
 
 ---
 
-### PERCOBAAN 5 — Aktuator Motor Stepper
+### PERCOBAAN 4 — Aktuator Motor Stepper
 
 **Tujuan:**
 Mahasiswa mampu mengimplementasikan kontrol motor stepper menggunakan sinyal step melalui driver motor stepper.
@@ -399,6 +416,14 @@ Mahasiswa mampu mengimplementasikan kontrol motor stepper menggunakan sinyal ste
 | Driver stepper — STEP | GPIO 18 | Setiap pulsa menggerakkan motor satu step |
 | Driver stepper — EN | GPIO 19 | Enable driver (aktif LOW pada sebagian besar driver) |
 | Driver stepper — RESET | GPIO 21 | Ditarik HIGH agar driver aktif normal |
+
+**`platformio.ini`:**
+```ini
+[env:esp32dev]
+platform = espressif32
+board = esp32dev
+framework = arduino
+```
 
 **Langkah Kerja:**
 1. Rangkai motor stepper melalui driver (mis. A4988/DRV8825) sesuai skema, gunakan catu daya eksternal sesuai spesifikasi motor
@@ -445,11 +470,11 @@ void loop() {
 | `digitalWrite(EN_PIN, HIGH)` | Perlu diverifikasi pada datasheet driver — sebagian driver justru aktif LOW pada pin EN, sehingga logikanya perlu disesuaikan |
 | `digitalWrite(RESET_PIN, HIGH)` | Menonaktifkan mode reset agar driver beroperasi normal |
 
-> **Catatan:** Kode dasar ini hanya menggerakkan motor pada satu arah. Sebagai pengembangan, tambahkan pin **DIR** pada driver untuk mengatur arah putaran (bandingkan dengan pendekatan IN1/IN2 pada motor DC di Percobaan 4).
+> **Catatan:** Kode dasar ini hanya menggerakkan motor pada satu arah. Sebagai pengembangan, tambahkan pin **DIR** pada driver untuk mengatur arah putaran (bandingkan dengan pendekatan IN1/IN2 pada motor DC di Percobaan 3).
 
 ---
 
-### PERCOBAAN 6 — Aktuator Motor Servo
+### PERCOBAAN 5 — Aktuator Motor Servo
 
 **Tujuan:**
 Mahasiswa mampu mengimplementasikan kontrol posisi sudut motor servo menggunakan sinyal PWM melalui library ESP32Servo.
@@ -459,6 +484,15 @@ Mahasiswa mampu mengimplementasikan kontrol posisi sudut motor servo menggunakan
 | Komponen | Pin ESP32 | Keterangan |
 |---|---|---|
 | Servo motor (sinyal) | GPIO 13 | Sinyal PWM servo (50Hz) |
+
+**`platformio.ini`:**
+```ini
+[env:esp32dev]
+platform = espressif32
+board = esp32dev
+framework = arduino
+lib_deps = madhephaestus/ESP32Servo@^3.0.0
+```
 
 **Langkah Kerja:**
 1. Rangkai servo motor sesuai skema (sinyal ke GPIO 13, VCC dan GND ke catu daya yang sesuai)
@@ -508,36 +542,7 @@ Rancang sistem yang menggabungkan minimal satu sensor dari tiap basis pengukuran
 
 ---
 
-## F. Format Laporan Praktikum
-
-1. **Cover** — judul modul, nama, NIM, kelas
-2. **Tujuan Praktikum**
-3. **Dasar Teori Singkat** (parafrase, bukan salinan modul)
-4. **Alat dan Bahan**
-5. **Langkah Kerja & Skema Rangkaian** (sertakan foto rangkaian nyata untuk tiap percobaan)
-6. **Kode Program** (lengkap, dengan komentar)
-7. **Hasil dan Pembahasan** (data pengamatan/kalibrasi tiap sensor, jawaban pertanyaan analisis, hasil tugas akhir modul)
-8. **Kesimpulan**
-9. **Lampiran** (foto/video demo, dokumentasi tambahan)
-
----
-
-## G. Rubrik Penilaian
-
-| Aspek | Bobot | Kriteria |
-|---|---|---|
-| Implementasi sensor resistif (LDR) | 15% | Pembacaan ADC dan konversi tegangan berjalan benar |
-| Implementasi sensor kapasitif & induktif (touch, hall effect) | 15% | Touch sensor dan hall effect terbaca dengan benar |
-| Implementasi sensor basis lain (ultrasonik, IR) | 10% | Pengukuran jarak dan deteksi obstacle berjalan benar |
-| Implementasi aktuator motor DC | 15% | Kontrol kecepatan dan arah motor DC berjalan sesuai spesifikasi |
-| Implementasi aktuator motor stepper | 15% | Motor stepper bergerak sejumlah step sesuai program |
-| Implementasi aktuator motor servo | 10% | Kontrol posisi sudut servo berjalan sesuai spesifikasi |
-| Tugas akhir modul (integrasi sensor + aktuator) | 10% | Sistem gabungan berfungsi sesuai rancangan |
-| Laporan & analisis | 10% | Kelengkapan, kedalaman analisis, kerapian dokumentasi |
-
----
-
-## H. Referensi
+## F. Referensi
 1. Espressif Systems, *ESP32 Technical Reference Manual*
 2. Espressif Systems, *ESP32 Arduino Core Documentation — Analog, Touch, LEDC*, https://docs.espressif.com/projects/arduino-esp32/
 3. Datasheet HC-SR04 Ultrasonic Sensor
@@ -545,43 +550,3 @@ Rancang sistem yang menggabungkan minimal satu sensor dari tiap basis pengukuran
 5. Datasheet Driver Motor Stepper A4988/DRV8825
 6. ESP32Servo Library Documentation, https://github.com/madhephaestus/ESP32Servo
 7. PlatformIO Documentation, https://docs.platformio.org/
-
----
-
-## I. Kumpulan Pertanyaan
-
-### Pertanyaan Pra-Praktikum
-1. Mengapa sensor resistif seperti LDR perlu dirangkai sebagai pembagi tegangan sebelum dapat dibaca oleh ADC mikrokontroler?
-2. Jelaskan perbedaan prinsip kerja antara sensor kapasitif dan sensor induktif dalam mendeteksi suatu objek/besaran fisik.
-3. Apa yang dimaksud dengan duty cycle pada sinyal PWM, dan bagaimana pengaruhnya terhadap kecepatan putar motor DC?
-4. Jelaskan perbedaan mendasar antara cara kerja motor DC, motor stepper, dan motor servo dalam merespons sinyal kontrol dari mikrokontroler
-
-### Pertanyaan/Analisis Percobaan 1 — Sensor Resistif
-1. Jelaskan mengapa nilai ADC dari LDR perlu dikonversi menjadi tegangan agar lebih bermakna secara fisik
-2. Bagaimana pengaruh nilai resistor tetap pada rangkaian pembagi tegangan terhadap rentang nilai ADC yang terbaca dari LDR?
-3. Apa yang akan terjadi pada rentang nilai ADC yang terbaca jika posisi LDR dan resistor tetap pada rangkaian pembagi tegangan ditukar?
-
-### Pertanyaan/Analisis Percobaan 2 — Sensor Kapasitif & Induktif
-1. Mengapa nilai `touchRead()` pada ESP32 justru semakin *kecil* saat pin disentuh, alih-alih semakin besar?
-2. Jelaskan mengapa hall effect sensor module yang digunakan bersifat aktif LOW, dan bagaimana cara memastikan hal ini pada modul yang digunakan
-3. Sebutkan satu aplikasi nyata yang lebih cocok menggunakan sensor induktif (hall effect) dibandingkan sensor kapasitif (touch), dan jelaskan alasannya
-
-### Pertanyaan/Analisis Percobaan 3 — Sensor Basis Lain
-1. Jelaskan mengapa perhitungan jarak pada sensor ultrasonik perlu dibagi dua (`/2.0`) pada rumus konversi waktu ke jarak
-2. Apa yang terjadi pada hasil pembacaan `pulseIn()` jika objek berada di luar jangkauan maksimum sensor ultrasonik? Jelaskan peran parameter timeout dan nilai `duration == 0` pada fungsi `readDistanceCM()`
-3. Sebutkan satu kelebihan dan satu keterbatasan sensor ultrasonik dibandingkan sensor IR obstacle untuk aplikasi deteksi jarak
-
-### Pertanyaan/Analisis Percobaan 4 — Aktuator Motor DC
-1. Jelaskan bagaimana kombinasi nilai IN1 dan IN2 menentukan arah putar motor DC pada program yang diimplementasikan
-2. Mengapa nilai PWM (ENA) tetap diperlukan meskipun arah putar sudah ditentukan oleh IN1/IN2?
-3. Mengapa motor DC pada praktikum ini disarankan menggunakan catu daya eksternal, bukan langsung dari pin 5V/3.3V ESP32?
-
-### Pertanyaan/Analisis Percobaan 5 — Aktuator Motor Stepper
-1. Jelaskan perbedaan mendasar antara cara kerja motor DC (Percobaan 4) dan motor stepper dalam merespons sinyal kontrol dari mikrokontroler
-2. Apa yang dimaksud dengan "kehilangan step" (missed step) pada motor stepper, dan faktor apa pada program yang dapat menyebabkannya?
-3. Jelaskan fungsi pin EN dan RESET pada driver motor stepper yang digunakan
-
-### Pertanyaan/Analisis Percobaan 6 — Aktuator Motor Servo
-1. Jelaskan bagaimana lebar pulsa (pulse width) pada sinyal kontrol servo menentukan posisi sudutnya
-2. Bandingkan hasil pengamatan pergerakan servo secara bertahap dengan perpindahan langsung — jelaskan penyebab perbedaan yang teramati
-3. Mengapa kontrol servo tidak memerlukan pin arah terpisah seperti pada motor DC atau motor stepper?

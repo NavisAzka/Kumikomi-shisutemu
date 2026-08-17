@@ -2,9 +2,30 @@
 # PENGANTAR MIKROKONTROLER & DASAR PEMROGRAMAN
 
 **Mata Kuliah:** Praktikum Mikrokontroler & Embedded System
-**Alokasi Waktu:** 4 x Percobaan (@ 100–150 menit)
-**Platform:** STM32 Blackpill (Framework HAL) & ESP32 (Framework ESP-IDF dan Arduino)
+**Alokasi Waktu:** 5 x Percobaan (@ 100–150 menit)
+**Platform:** STM32 Blackpill (Framework Arduino) & ESP32 (Framework ESP-IDF dan Arduino)
 **IDE:** VSCode + PlatformIO
+
+---
+
+## Daftar Isi
+- [A. Capaian Pembelajaran](#a-capaian-pembelajaran)
+- [B. Alat dan Bahan](#b-alat-dan-bahan)
+- [C. Dasar Teori](#c-dasar-teori)
+  - [C.1 PlatformIO dan VSCode sebagai Lingkungan Pengembangan](#c1-platformio-dan-vscode-sebagai-lingkungan-pengembangan)
+  - [C.2 STM32 Blackpill dan Framework Arduino](#c2-stm32-blackpill-dan-framework-arduino)
+  - [C.3 ESP32 dan Framework ESP-IDF](#c3-esp32-dan-framework-esp-idf)
+  - [C.4 Konfigurasi Pull-up dan Pull-down Resistor pada Tombol](#c4-konfigurasi-pull-up-dan-pull-down-resistor-pada-tombol)
+  - [C.5 Debouncing](#c5-debouncing)
+  - [C.6 Level Shifter (Konverter Level Tegangan Logika)](#c6-level-shifter-konverter-level-tegangan-logika)
+- [D. Persiapan Sebelum Praktikum](#d-persiapan-sebelum-praktikum)
+- [E. Kegiatan Praktikum](#e-kegiatan-praktikum)
+  - [PERCOBAAN 1 — Instalasi PlatformIO & Pengenalan STM32 Blackpill (Blink)](#percobaan-1--instalasi-platformio--pengenalan-stm32-blackpill-blink)
+  - [PERCOBAAN 2 — Pengenalan ESP32 dengan Framework ESP-IDF (Blink)](#percobaan-2--pengenalan-esp32-dengan-framework-esp-idf-blink)
+  - [PERCOBAAN 3 — Pull-up dan Pull-down: Eksternal vs Internal (2 Button, 2 Kode Program) (ESP32 + Framework Arduino)](#percobaan-3--pull-up-dan-pull-down-eksternal-vs-internal-2-button-2-kode-program-esp32--framework-arduino)
+  - [PERCOBAAN 4 — Debouncing pada Input Tombol GPIO (ESP32 + Framework Arduino)](#percobaan-4--debouncing-pada-input-tombol-gpio-esp32--framework-arduino)
+  - [PERCOBAAN 5 — Level Shifter: Pengukuran Tegangan Input dan Output (ESP32 + Framework Arduino)](#percobaan-5--level-shifter-pengukuran-tegangan-input-dan-output-esp32--framework-arduino)
+- [F. Referensi](#f-referensi)
 
 ---
 
@@ -12,12 +33,13 @@
 
 Setelah menyelesaikan Modul 1, praktikan mampu:
 1. Melakukan instalasi dan konfigurasi PlatformIO pada VSCode sebagai lingkungan pengembangan
-2. Menjelaskan arsitektur board STM32 Blackpill dan ESP32, serta membedakan karakteristik framework HAL, ESP-IDF, dan Arduino
-3. Melakukan flashing program Blink ke STM32 Blackpill menggunakan ST-Link (framework HAL)
+2. Menjelaskan arsitektur board STM32 Blackpill dan ESP32, serta membedakan karakteristik framework Arduino dan ESP-IDF
+3. Melakukan flashing program Blink ke STM32 Blackpill menggunakan ST-Link (framework Arduino)
 4. Melakukan flashing program Blink ke ESP32 menggunakan framework ESP-IDF
-5. Mengidentifikasi dan membedakan berbagai jenis tombol/saklar (NO, NC, toggle switch, DIP switch, matrix button)
-6. Mengimplementasikan pembacaan GPIO untuk setiap jenis tombol pada ESP32 menggunakan framework Arduino
+5. Mengidentifikasi dan membedakan konfigurasi pembacaan tombol menggunakan pull-up dan pull-down resistor, baik secara eksternal maupun internal
+6. Mengimplementasikan pembacaan GPIO untuk konfigurasi pull-up/pull-down eksternal dan internal pada ESP32 menggunakan framework Arduino
 7. Mengimplementasikan debouncing pada input tombol berbasis GPIO
+8. Menjelaskan fungsi level shifter sebagai konverter level tegangan logika (3.3V ↔ 5V), serta mengukur tegangan sisi input dan output menggunakan multimeter/voltmeter
 
 ---
 
@@ -33,13 +55,11 @@ Setelah menyelesaikan Modul 1, praktikan mampu:
 | 6 | Breadboard | 830 titik | 1 |
 | 7 | Kabel jumper male-male | — | secukupnya |
 | 8 | LED + resistor 220Ω | untuk uji Blink ESP32 (bila tidak ada LED onboard) | 1 |
-| 9 | Pushbutton (tactile) | Normally Open (NO) | 2 |
-| 10 | Limit switch / microswitch | Normally Close (NC) | 1 |
-| 11 | Toggle/slide switch | 2 posisi (latching) | 1 |
-| 12 | DIP switch | 4-bit atau 8-bit | 1 |
-| 13 | Matrix keypad | 4x4 | 1 |
-| 14 | Resistor | 10kΩ (pull-up/pull-down eksternal jika diperlukan) | secukupnya |
-| 15 | Laptop/PC | Windows/Mac/Linux, VSCode terinstal | 1 |
+| 9 | Pushbutton (tactile) | untuk pull-up/pull-down eksternal & internal (Percobaan 3) dan debouncing (Percobaan 4) | 2 |
+| 10 | Resistor | 10kΩ, untuk pull-up eksternal dan pull-down eksternal (Percobaan 3) | 2 |
+| 11 | Level shifter (logic level converter) | Bidirectional, mis. modul 4-channel berbasis BSS138 | 1 |
+| 12 | Multimeter/voltmeter | Mode pengukuran tegangan DC | 1 |
+| 13 | Laptop/PC | Windows/Mac/Linux, VSCode terinstal | 1 |
 
 ---
 
@@ -54,14 +74,16 @@ Struktur project PlatformIO terdiri atas:
 - `include/` — folder header file
 - `lib/` — folder library tambahan
 
-### C.2 STM32 Blackpill dan Framework HAL
+### C.2 STM32 Blackpill dan Framework Arduino
 Blackpill adalah development board berbasis mikrokontroler STM32F401/F411 (ARM Cortex-M4, 32-bit). Karakteristik utama:
 - CPU ARM Cortex-M4 dengan FPU, clock hingga 84–100 MHz
 - Memori Flash 256–512 KB, RAM 64–128 KB
 - LED onboard di pin **PC13** (aktif LOW), tombol user di pin **PA0**
 - Tidak memiliki programmer onboard — memerlukan **ST-Link** eksternal via protokol **SWD** (SWDIO, SWCLK, GND, 3.3V)
 
-**HAL (Hardware Abstraction Layer)** adalah pustaka resmi STMicroelectronics yang menyediakan fungsi standar untuk mengakses peripheral tanpa menulis langsung ke register, namun tetap memberi kontrol rinci. Ciri khasnya: diawali `HAL_Init()`, konfigurasi peripheral menggunakan struct (mis. `GPIO_InitTypeDef`), dan clock peripheral harus diaktifkan eksplisit (mis. `__HAL_RCC_GPIOC_CLK_ENABLE()`).
+STM32 dapat diprogram menggunakan **framework Arduino** (dikenal sebagai **STM32duino**) — lapisan abstraksi yang menyediakan fungsi-fungsi familiar seperti `pinMode()`, `digitalWrite()`, dan `delay()`, sama seperti pada board Arduino/ESP32 pada umumnya. Framework ini memudahkan pemula memulai pemrograman STM32 tanpa perlu memahami detail register/HAL terlebih dahulu — meskipun di balik layar, framework Arduino ini tetap dibangun di atas **HAL (Hardware Abstraction Layer)**, pustaka resmi STMicroelectronics untuk mengakses peripheral.
+
+Salah satu ciri khas STM32duino adalah dukungan penamaan pin langsung sesuai label port fisik pada board, misalnya `PC13` atau `PA0`, alih-alih hanya nomor pin generik seperti pada board Arduino biasa.
 
 ### C.3 ESP32 dan Framework ESP-IDF
 ESP32 adalah mikrokontroler 32-bit dual-core (Xtensa LX6) dengan WiFi dan Bluetooth terintegrasi, serta dilengkapi USB-to-Serial bawaan sehingga dapat langsung diprogram melalui kabel USB tanpa programmer eksternal.
@@ -75,100 +97,33 @@ ESP32 adalah mikrokontroler 32-bit dual-core (Xtensa LX6) dengan WiFi dan Blueto
 | Tingkat abstraksi | Tinggi (mudah dipelajari) | Rendah–menengah (lebih native, lebih kuat) |
 | Akses fitur RTOS | Tersembunyi/terbatas | Langsung (task, semaphore, queue) |
 
-### C.4 Macam-Macam Tombol/Saklar
-- **Normally Open (NO):** kontak *terbuka* saat idle, *tertutup* saat ditekan. Umum digunakan sebagai pushbutton momentary
-- **Normally Close (NC):** kebalikan dari NO — kontak *tertutup* saat idle, *terbuka* saat ditekan/aktif. Umum pada limit switch untuk aplikasi safety
-- **Toggle/Slide Switch:** bersifat *latching* — mempertahankan posisi terakhir tanpa perlu ditahan
-- **DIP Switch:** kumpulan beberapa saklar kecil dalam satu paket, umum untuk pengaturan konfigurasi (mis. addressing)
-- **Matrix Button (Keypad):** susunan tombol dalam format baris-kolom (mis. keypad 4x4 = 16 tombol), dibaca dengan teknik *scanning* sehingga jumlah pin yang dibutuhkan jauh lebih sedikit
+### C.4 Konfigurasi Pull-up dan Pull-down Resistor pada Tombol
+Saat sebuah tombol/pushbutton tidak ditekan dan kedua kakinya tidak terhubung ke jalur tegangan mana pun, pin GPIO yang membacanya berada dalam kondisi ***floating*** — nilainya tidak pasti (bisa terbaca HIGH atau LOW secara acak akibat noise). Untuk mengatasi hal ini, pin GPIO perlu "ditarik" (*pulled*) ke salah satu level tegangan tertentu ketika tombol tidak ditekan, menggunakan resistor:
+- **Pull-up Resistor:** menghubungkan pin GPIO ke VCC (3.3V) melalui resistor (umumnya 10kΩ). Saat tombol tidak ditekan, pin terbaca **HIGH**; saat tombol ditekan (menghubungkan pin ke GND), pin terbaca **LOW**.
+- **Pull-down Resistor:** menghubungkan pin GPIO ke GND melalui resistor. Saat tombol tidak ditekan, pin terbaca **LOW**; saat tombol ditekan (menghubungkan pin ke VCC), pin terbaca **HIGH** — logika ini berkebalikan dengan konfigurasi pull-up.
+
+Resistor pull-up/pull-down di atas dapat dipasang secara **eksternal** (komponen resistor fisik pada breadboard), maupun diaktifkan secara **internal** melalui firmware tanpa resistor tambahan. ESP32 menyediakan keduanya pada framework Arduino: `pinMode(pin, INPUT_PULLUP)` untuk pull-up internal, dan `pinMode(pin, INPUT_PULLDOWN)` untuk pull-down internal. Perlu diperhatikan bahwa **tidak semua pin GPIO ESP32 mendukung resistor pull internal** — pin input-only (GPIO 34–39) sama sekali tidak memiliki resistor pull-up/pull-down internal, sehingga wajib menggunakan resistor eksternal jika digunakan sebagai input tombol.
 
 ### C.5 Debouncing
 Kontak mekanik pada tombol/saklar menghasilkan beberapa transisi sinyal HIGH-LOW dalam waktu sangat singkat akibat getaran fisik saat kontak bersentuhan/terlepas ("bouncing"). Tanpa penanganan, satu kali aksi tekan dapat terbaca sebagai beberapa kali event. **Debouncing** memastikan hanya satu transisi valid yang terdeteksi, dengan menunggu sinyal stabil selama periode waktu tertentu (mis. 20–50ms) sebelum event dianggap sah.
+
+### C.6 Level Shifter (Konverter Level Tegangan Logika)
+ESP32 dan STM32 beroperasi pada level logika **3.3V**, sedangkan cukup banyak modul/sensor lain (terutama modul lawas) beroperasi pada level logika **5V**. Menghubungkan langsung output 5V ke pin GPIO 3.3V berisiko merusak mikrokontroler, karena sebagian besar pin GPIO ESP32/STM32 tidak toleran terhadap tegangan di atas ±3.3–3.6V.
+
+**Level shifter** adalah rangkaian/modul yang mengonversi level tegangan logika digital dari satu domain (mis. 3.3V) ke domain lain (mis. 5V) atau sebaliknya, tanpa mengubah informasi digital (HIGH/LOW, atau duty cycle bila sinyalnya PWM) yang dibawa oleh sinyal tersebut. Terdapat dua jenis utama:
+- **Unidirectional (satu arah):** hanya mengonversi sinyal pada satu arah aliran data (mis. 3.3V → 5V saja), umumnya berbasis transistor atau gerbang logika sederhana
+- **Bidirectional (dua arah):** dapat mengonversi sinyal pada kedua arah secara otomatis tergantung arah aliran data — umum digunakan pada jalur komunikasi dua arah seperti I2C, biasanya berbasis MOSFET (mis. BSS138 pada modul "4-channel logic level converter")
+
+Modul level shifter bidirectional pada umumnya memiliki dua sisi: **LV (Low Voltage)** dan **HV (High Voltage)**, masing-masing dengan pin VCC dan GND tersendiri, serta beberapa pasang channel sinyal (LV1↔HV1, LV2↔HV2, dst.) yang saling terhubung secara internal.
 
 ---
 
 ## D. Persiapan Sebelum Praktikum
 
-### D.1 Instalasi Visual Studio Code
+Instalasi Visual Studio Code, ekstensi PlatformIO, cara membuat project baru, mengenal toolbar PlatformIO, dan instalasi driver USB (ST-Link untuk STM32, CP2102/CH340 untuk ESP32) sudah dibahas lengkap dan bergambar pada dokumen terpisah: **[setup_vscode_platformio.md](setup_vscode_platformio.md)**. Pastikan seluruh langkah pada dokumen tersebut sudah selesai sebelum melanjutkan ke Bagian E.
 
-1. Buka browser, kunjungi situs resmi Visual Studio Code: `https://code.visualstudio.com/`
-2. Klik tombol **Download** sesuai sistem operasi yang digunakan (Windows/Mac/Linux)
-
-   *[Gambar 1: Tampilan halaman download Visual Studio Code]*
-3. Jalankan file installer yang telah diunduh
-4. Ikuti proses instalasi: setujui lisensi (*I accept the agreement*) → **Next**
-5. Pada halaman **Select Additional Tasks**, disarankan mencentang opsi:
-   - *Add "Open with Code" action to Windows Explorer file context menu*
-   - *Add to PATH*
-
-   *[Gambar 2: Halaman Select Additional Tasks pada installer]*
-6. Klik **Install**, tunggu proses selesai, lalu klik **Finish** (centang *Launch Visual Studio Code* agar aplikasi langsung terbuka)
-7. Pastikan VSCode berhasil terbuka dan menampilkan halaman Welcome
-
-   *[Gambar 3: Tampilan awal VSCode setelah instalasi]*
-
-### D.2 Instalasi Ekstensi PlatformIO IDE
-
-1. Buka VSCode, klik ikon **Extensions** pada sidebar kiri (ikon kotak/persegi bersusun), atau tekan `Ctrl+Shift+X`
-
-   *[Gambar 4: Lokasi ikon Extensions pada sidebar VSCode]*
-2. Pada kolom pencarian, ketik **"PlatformIO IDE"**
-3. Pilih ekstensi **PlatformIO IDE** yang dipublikasikan oleh **PlatformIO** (biasanya hasil teratas), klik **Install**
-
-   *[Gambar 5: Hasil pencarian ekstensi PlatformIO IDE di Marketplace]*
-4. Tunggu proses instalasi hingga selesai — proses ini membutuhkan koneksi internet dan dapat memakan waktu beberapa menit karena PlatformIO Core (Python) akan diunduh dan dikonfigurasi secara otomatis
-5. Setelah selesai, VSCode akan meminta untuk **restart/reload window** — klik tombol tersebut jika muncul
-6. Setelah VSCode terbuka kembali, akan muncul ikon baru berbentuk semut (PlatformIO) pada sidebar kiri — klik ikon tersebut untuk membuka **PlatformIO Home**
-
-   *[Gambar 6: Ikon PlatformIO pada sidebar dan tampilan PlatformIO Home]*
-7. Pastikan halaman **PlatformIO Home** berhasil terbuka tanpa pesan error, sebagai tanda instalasi berhasil
-
-### D.3 Membuat Project Baru di PlatformIO
-
-1. Pada halaman **PlatformIO Home**, klik tombol **"+ New Project"**
-
-   *[Gambar 7: Tombol New Project pada PlatformIO Home]*
-2. Isi form yang muncul:
-   - **Name:** nama project (mis. `modul1-blink-blackpill`)
-   - **Board:** ketik dan pilih board yang sesuai (mis. "Blackpill F411CE" atau "Espressif ESP32 Dev Module")
-   - **Framework:** pilih framework sesuai kebutuhan (mis. "STM32Cube (HAL)", "Espressif IoT Development Framework", atau "Arduino")
-
-   *[Gambar 8: Form New Project — pengisian Name, Board, dan Framework]*
-3. Klik **Finish**, tunggu PlatformIO membuat struktur project secara otomatis (proses ini mengunduh package board/framework terkait jika belum tersedia di sistem)
-4. Setelah selesai, VSCode akan menampilkan struktur folder project pada **Explorer**:
-   - `platformio.ini` — file konfigurasi utama
-   - `src/` — folder kode program (berisi `main.c` atau `main.cpp`)
-   - `include/`, `lib/`, `test/` — folder pendukung
-
-   *[Gambar 9: Struktur folder project PlatformIO pada Explorer VSCode]*
-
-### D.4 Mengenal Toolbar PlatformIO
-
-Pada bagian bawah jendela VSCode (status bar), terdapat ikon-ikon PlatformIO yang akan sering digunakan selama praktikum:
-
-| Ikon | Fungsi |
-|---|---|
-| ✓ (Build) | Mengompilasi program tanpa mengunggahnya ke board |
-| → (Upload) | Mengompilasi dan mengunggah program ke board |
-| 🔌 (Serial Monitor) | Membuka jendela Serial Monitor untuk melihat output `Serial.print()`/`printf` |
-| 🗑 (Clean) | Membersihkan hasil build sebelumnya |
-
-*[Gambar 10: Toolbar PlatformIO pada status bar VSCode dengan penjelasan tiap ikon]*
-
-### D.5 Instalasi Driver Tambahan
-
-1. Instal driver **ST-Link** (untuk STM32 Blackpill) dari situs resmi STMicroelectronics — **STSW-LINK009**:
-   `https://www.st.com/en/development-tools/stsw-link009.html`
-   (perlu membuat akun/login gratis di st.com untuk mengunduh)
-2. Instal driver USB-to-Serial ESP32, sesuai chip pada board (periksa penanda chip kecil di dekat konektor USB pada board ESP32):
-   - Jika chip **CP2102/CP2104** (Silicon Labs): unduh dari
-     `https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers`
-   - Jika chip **CH340/CH340C/CH341** (WCH): unduh dari situs resmi WCH
-     `https://www.wch-ic.com/downloads/CH341SER_ZIP.html`
-3. Restart PC/laptop setelah instalasi driver jika diperlukan
-4. Siapkan board STM32 Blackpill + ST-Link, dan board ESP32 DevKit, namun **jangan disambungkan terlebih dahulu** sebelum instruksi pada masing-masing percobaan
-
-> **Catatan:** Selalu unduh driver dari situs resmi produsen chip seperti tertulis di atas — hindari mengunduh dari situs pihak ketiga/torrent karena berisiko berisi malware.
+Sebelum memulai kegiatan praktikum:
+1. Siapkan board STM32 Blackpill + ST-Link, dan board ESP32 DevKit, namun **jangan disambungkan terlebih dahulu** sebelum instruksi pada masing-masing percobaan
 
 ---
 
@@ -177,68 +132,61 @@ Pada bagian bawah jendela VSCode (status bar), terdapat ikon-ikon PlatformIO yan
 ### PERCOBAAN 1 — Instalasi PlatformIO & Pengenalan STM32 Blackpill (Blink)
 
 **Tujuan:**
-Mahasiswa mampu melakukan instalasi PlatformIO, memahami arsitektur board Blackpill, dan berhasil melakukan flashing program Blink menggunakan ST-Link (framework HAL).
+Mahasiswa mampu melakukan instalasi PlatformIO, memahami arsitektur board Blackpill, dan berhasil melakukan flashing program Blink menggunakan ST-Link (framework Arduino).
 
 **Langkah Kerja:**
 1. Pastikan PlatformIO IDE sudah terinstal di VSCode (lihat bagian D)
 2. Buat project baru: **PlatformIO Home → New Project**
    - Name: `modul1-blink-blackpill`
    - Board: **"Blackpill F411CE"** (atau **"Blackpill F401CC"** sesuai chip pada board)
-   - Framework: **STM32Cube (HAL)**
+   - Framework: **Arduino**
 3. Pastikan `platformio.ini` berisi:
    ```ini
    [env:blackpill_f411ce]
    platform = ststm32
    board = blackpill_f411ce
-   framework = stm32cube
+   framework = arduino
    upload_protocol = stlink
    debug_tool = stlink
    ```
 4. Sambungkan ST-Link ke Blackpill (SWDIO, SWCLK, GND, 3.3V), lalu ST-Link ke PC via USB
-5. Tulis kode Blink berikut pada `src/main.c`
+5. Tulis kode Blink berikut pada `src/main.cpp` (perhatikan: framework Arduino menggunakan ekstensi `.cpp`, bukan `.c` seperti HAL)
 6. **Build**, lalu **Upload** — amati proses flashing pada terminal PlatformIO
 7. Amati LED onboard (PC13) berkedip setiap 500ms
 8. Diskusi: pinout board Blackpill (GPIO, power, BOOT0, LED onboard, tombol user PA0)
 
-**Kode Program (Blink STM32 HAL):**
-```c
-#include "stm32f4xx_hal.h"
+**Kode Program (Blink STM32 Arduino):**
+```cpp
+#include <Arduino.h>
 
-#define LED_PIN GPIO_PIN_13
-#define LED_PORT GPIOC
+#define LED_PIN PC13
 
-void GPIO_Init_LED(void)
+void setup()
 {
-  GPIO_InitTypeDef GPIO_InitStruct = {0};
-  __HAL_RCC_GPIOC_CLK_ENABLE();
-
-  GPIO_InitStruct.Pin = LED_PIN;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(LED_PORT, &GPIO_InitStruct);
+  pinMode(LED_PIN, OUTPUT);
 }
 
-int main(void)
+void loop()
 {
-  HAL_Init();
-  GPIO_Init_LED();
-
-  while (1)
-  {
-    HAL_GPIO_TogglePin(LED_PORT, LED_PIN); // LED onboard aktif LOW
-    HAL_Delay(500);
-  }
+  digitalWrite(LED_PIN, LOW);  // LED onboard aktif LOW -> LOW berarti menyala
+  delay(500);
+  digitalWrite(LED_PIN, HIGH); // HIGH berarti mati
+  delay(500);
 }
 ```
 
 **Penjelasan Kode:**
 | Baris | Penjelasan |
 |---|---|
-| `__HAL_RCC_GPIOC_CLK_ENABLE()` | Mengaktifkan clock peripheral GPIOC sebelum dapat digunakan |
-| `GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP` | Konfigurasi pin sebagai output push-pull |
-| `HAL_GPIO_TogglePin()` | Membalik status pin (HIGH↔LOW) setiap kali dipanggil |
-| `HAL_Delay(500)` | Fungsi delay bawaan HAL, satuan milidetik |
+| `#define LED_PIN PC13` | Framework Arduino pada STM32 (STM32duino) mendukung penamaan pin langsung sesuai label port fisik pada board, tanpa perlu mengonfigurasi struct `GPIO_InitTypeDef` seperti pada HAL |
+| `pinMode(LED_PIN, OUTPUT)` | Mengonfigurasi pin sebagai output digital — clock peripheral GPIO diaktifkan otomatis oleh framework di balik layar |
+| `digitalWrite(LED_PIN, LOW/HIGH)` | Mengatur level tegangan pin; karena LED onboard Blackpill aktif LOW, nilai `LOW` berarti menyala |
+| `delay(500)` | Fungsi delay standar Arduino, satuan milidetik |
+
+**Analisis Setelah Program Berjalan:**
+1. Amati kecepatan kedip LED onboard — pastikan sesuai ekspektasi (nyala 500ms, mati 500ms, sehingga berkedip 1 kali per detik)
+2. Catat pesan yang muncul di terminal PlatformIO saat proses upload selesai (mis. `SUCCESS`), sebagai bukti verifikasi bahwa flashing berhasil
+3. Ubah nilai `delay(500)` menjadi `delay(100)`, **Build & Upload** ulang, lalu amati apakah kecepatan kedip LED berubah sesuai ekspektasi
 
 ---
 
@@ -259,7 +207,7 @@ Mahasiswa mampu memahami arsitektur ESP32 dan struktur program berbasis ESP-IDF,
    board = esp32dev
    framework = espidf
    ```
-3. Amati struktur project ESP-IDF (`src/main.c`, fungsi `app_main()`) — bandingkan dengan struktur project HAL pada Percobaan 1
+3. Amati struktur project ESP-IDF (`src/main.c`, fungsi `app_main()`) — bandingkan dengan struktur project Arduino pada Percobaan 1
 4. Sambungkan ESP32 ke PC via USB, pastikan port terdeteksi
 5. Tulis kode Blink berikut pada `src/main.c`
 6. **Build** dan **Upload**, amati LED (GPIO 2, onboard pada sebagian besar board ESP32 DevKit) berkedip setiap 500ms
@@ -295,16 +243,21 @@ void app_main(void)
 | `gpio_set_level()` | Mengatur level tegangan pin, analog dengan `digitalWrite()` |
 | `vTaskDelay(pdMS_TO_TICKS(500))` | Delay berbasis FreeRTOS tick, bukan `delay()` biasa — tidak memblokir task lain |
 
+**Analisis Setelah Program Berjalan:**
+1. Amati kecepatan kedip LED, bandingkan dengan hasil Percobaan 1 — seharusnya sama-sama 1 kali kedip per detik meskipun frameworknya berbeda
+2. Catat dan bandingkan **waktu proses build** antara project ESP-IDF ini dengan project Arduino pada Percobaan 1 — umumnya ESP-IDF membutuhkan waktu lebih lama karena mengompilasi lebih banyak komponen (FreeRTOS, driver, dsb.)
+3. Uji dengan menghapus salah satu baris `vTaskDelay()` pada `loop()`, amati perubahan perilaku LED setelah di-upload ulang
+
 ---
 
-### PERCOBAAN 3 — Pengenalan Macam-Macam Tombol (ESP32 + Framework Arduino)
+### PERCOBAAN 3 — Pull-up dan Pull-down: Eksternal vs Internal (2 Button, 2 Kode Program) (ESP32 + Framework Arduino)
 
 **Tujuan:**
-Mahasiswa mampu mengidentifikasi karakteristik berbagai jenis tombol/saklar dan mengimplementasikan pembacaan GPIO untuk masing-masing jenis menggunakan ESP32 dengan framework Arduino.
+Mahasiswa mampu memahami, mengimplementasikan, dan membandingkan pembacaan tombol menggunakan resistor pull-up/pull-down yang dipasang secara **eksternal** maupun diaktifkan secara **internal** pada ESP32 dengan framework Arduino, menggunakan 2 pushbutton yang sama untuk kedua kondisi.
 
 **Langkah Kerja:**
 1. Buat project baru di PlatformIO:
-   - Name: `modul1-tombol-esp32-arduino`
+   - Name: `modul1-pullup-pulldown-eksternal-internal`
    - Board: **"Espressif ESP32 Dev Module"**
    - Framework: **Arduino**
 2. Pastikan `platformio.ini` berisi:
@@ -314,102 +267,82 @@ Mahasiswa mampu mengidentifikasi karakteristik berbagai jenis tombol/saklar dan 
    board = esp32dev
    framework = arduino
    ```
-3. Rangkai dan uji satu per satu jenis tombol sesuai skema di bawah
+3. Rangkai kedua pushbutton pada GPIO 32 dan GPIO 33 **beserta resistor eksternalnya** sesuai skema Bagian A di bawah
+4. Upload **Kode Program A (Eksternal)**, uji kedua tombol, dan catat hasilnya pada Serial Monitor
+5. Lepas kedua resistor eksternal (kabel tombol ke GPIO, GND, dan 3.3V tetap terpasang) sesuai skema Bagian B
+6. Upload **Kode Program B (Internal)**, uji kedua tombol yang sama, dan catat hasilnya pada Serial Monitor
+7. Bandingkan hasil Kode Program A dan B untuk pin yang sama
 
-**Skema Rangkaian:**
+**Skema Rangkaian — Bagian A (Pull-up/Pull-down Eksternal):**
 
 | Komponen | Pin ESP32 | Keterangan |
 |---|---|---|
-| Pushbutton NO | GPIO 25 | Satu kaki ke GPIO, kaki lain ke GND, gunakan `INPUT_PULLUP` |
-| Limit switch NC | GPIO 26 | Satu kaki ke GPIO, kaki lain ke GND, gunakan `INPUT_PULLUP` |
-| Toggle switch | GPIO 27 | Satu posisi ke GPIO, posisi lain ke GND |
-| DIP switch (4-bit) | GPIO 32, 33, 34, 35 | Tiap switch ke satu GPIO |
-| Matrix keypad 4x4 | Baris: GPIO 13,12,14,27<br>Kolom: GPIO 26,25,33,32 | Scanning baris-kolom (sesuaikan agar tidak bentrok dengan pin lain) |
+| Pushbutton 1 (pull-up eksternal) | GPIO 32 | Satu kaki ke GPIO **dan** ke 3.3V melalui resistor 10kΩ (pull-up), kaki lain ke GND |
+| Pushbutton 2 (pull-down eksternal) | GPIO 33 | Satu kaki ke GPIO **dan** ke GND melalui resistor 10kΩ (pull-down), kaki lain ke 3.3V |
 
-**Kode Program (Pushbutton NO & Limit Switch NC):**
+**Skema Rangkaian — Bagian B (Pull-up/Pull-down Internal, tanpa resistor):**
+
+| Komponen | Pin ESP32 | Keterangan |
+|---|---|---|
+| Pushbutton 1 (pull-up internal) | GPIO 32 | Satu kaki ke GPIO, kaki lain ke GND — gunakan `INPUT_PULLUP` internal, resistor eksternal dilepas |
+| Pushbutton 2 (pull-down internal) | GPIO 33 | Satu kaki ke GPIO, kaki lain ke 3.3V — gunakan `INPUT_PULLDOWN` internal, resistor eksternal dilepas |
+
+**Kode Program A (Pull-up & Pull-down Eksternal):**
 ```cpp
-#define BTN_NO 25
-#define SW_NC  26
+#define BUTTON_PULLUP_PIN 32   // pull-up eksternal
+#define BUTTON_PULLDOWN_PIN 33 // pull-down eksternal
 
 void setup() {
   Serial.begin(115200);
-  pinMode(BTN_NO, INPUT_PULLUP);
-  pinMode(SW_NC, INPUT_PULLUP);
+  pinMode(BUTTON_PULLUP_PIN, INPUT);   // resistor pull-up dipasang eksternal, bukan INPUT_PULLUP internal
+  pinMode(BUTTON_PULLDOWN_PIN, INPUT); // resistor pull-down dipasang eksternal
 }
 
 void loop() {
-  bool btnPressed = (digitalRead(BTN_NO) == LOW);  // NO: idle HIGH, ditekan LOW
-  bool swActive   = (digitalRead(SW_NC) == HIGH);  // NC: idle LOW, aktif/terputus HIGH
+  int stateUp = digitalRead(BUTTON_PULLUP_PIN);
+  int stateDown = digitalRead(BUTTON_PULLDOWN_PIN);
 
-  Serial.printf("NO: %s | NC: %s\n",
-                btnPressed ? "DITEKAN" : "idle",
-                swActive ? "AKTIF/TERPUTUS" : "idle");
+  Serial.printf("[EKSTERNAL] Pull-up (GPIO32): %s | Pull-down (GPIO33): %s\n",
+                stateUp == LOW ? "DITEKAN" : "TIDAK DITEKAN",
+                stateDown == HIGH ? "DITEKAN" : "TIDAK DITEKAN");
   delay(200);
 }
 ```
 
-**Kode Program (DIP Switch — Baca 4-bit):**
+**Kode Program B (Pull-up & Pull-down Internal):**
 ```cpp
-int dipPins[4] = {32, 33, 34, 35};
+#define BUTTON_PULLUP_PIN 32   // pull-up internal, pin sama seperti Kode Program A
+#define BUTTON_PULLDOWN_PIN 33 // pull-down internal, pin sama seperti Kode Program A
 
 void setup() {
   Serial.begin(115200);
-  for (int i = 0; i < 4; i++) pinMode(dipPins[i], INPUT_PULLUP);
+  pinMode(BUTTON_PULLUP_PIN, INPUT_PULLUP);     // pull-up internal ESP32, tanpa resistor eksternal
+  pinMode(BUTTON_PULLDOWN_PIN, INPUT_PULLDOWN); // pull-down internal ESP32, tanpa resistor eksternal
 }
 
 void loop() {
-  uint8_t value = 0;
-  for (int i = 0; i < 4; i++) {
-    value |= (digitalRead(dipPins[i]) == LOW) << i;
-  }
-  Serial.printf("Nilai DIP Switch: %d\n", value);
-  delay(300);
+  int stateUp = digitalRead(BUTTON_PULLUP_PIN);
+  int stateDown = digitalRead(BUTTON_PULLDOWN_PIN);
+
+  Serial.printf("[INTERNAL] Pull-up (GPIO32): %s | Pull-down (GPIO33): %s\n",
+                stateUp == LOW ? "DITEKAN" : "TIDAK DITEKAN",
+                stateDown == HIGH ? "DITEKAN" : "TIDAK DITEKAN");
+  delay(200);
 }
 ```
 
-**Kode Program (Matrix Keypad 4x4 — Scanning):**
-```cpp
-#define ROWS 4
-#define COLS 4
+**Penjelasan Kode:**
+| Bagian | Penjelasan |
+|---|---|
+| Kode A — `pinMode(pin, INPUT)` | Kedua pin dikonfigurasi sebagai input biasa tanpa mengaktifkan pull-up/pull-down internal ESP32, karena resistor sudah dipasang secara eksternal pada rangkaian |
+| Kode B — `pinMode(pin, INPUT_PULLUP/INPUT_PULLDOWN)` | Mengaktifkan resistor pull-up/pull-down **internal** ESP32 pada pin yang sama, sehingga resistor eksternal tidak lagi diperlukan |
+| `stateUp == LOW` | Kondisi default pull-up (tidak ditekan) adalah HIGH karena pin ditarik ke 3.3V; saat ditekan, pin terhubung ke GND sehingga terbaca LOW — berlaku sama pada Kode A maupun Kode B |
+| `stateDown == HIGH` | Kondisi default pull-down (tidak ditekan) adalah LOW karena pin ditarik ke GND; saat ditekan, pin terhubung ke 3.3V sehingga terbaca HIGH — kebalikan dari pull-up, berlaku sama pada Kode A maupun Kode B |
 
-byte rowPins[ROWS] = {13, 12, 14, 27};
-byte colPins[COLS] = {26, 25, 33, 32};
-
-char keymap[ROWS][COLS] = {
-  {'1','2','3','A'},
-  {'4','5','6','B'},
-  {'7','8','9','C'},
-  {'*','0','#','D'}
-};
-
-void setup() {
-  Serial.begin(115200);
-  for (int i = 0; i < ROWS; i++) pinMode(rowPins[i], OUTPUT);
-  for (int i = 0; i < COLS; i++) pinMode(colPins[i], INPUT_PULLUP);
-}
-
-char scanKeypad() {
-  for (int r = 0; r < ROWS; r++) {
-    for (int i = 0; i < ROWS; i++) digitalWrite(rowPins[i], HIGH);
-    digitalWrite(rowPins[r], LOW);
-
-    for (int c = 0; c < COLS; c++) {
-      if (digitalRead(colPins[c]) == LOW) {
-        delay(20); // antisipasi bouncing awal
-        return keymap[r][c];
-      }
-    }
-  }
-  return '\0';
-}
-
-void loop() {
-  char key = scanKeypad();
-  if (key != '\0') {
-    Serial.printf("Tombol ditekan: %c\n", key);
-  }
-}
-```
+**Analisis Setelah Program Berjalan:**
+1. Bandingkan hasil **Kode Program A (eksternal)** dengan **Kode Program B (internal)** pada GPIO 32 (pull-up) — verifikasi keduanya menghasilkan logika yang identik (default HIGH, LOW saat ditekan)
+2. Bandingkan hasil **Kode Program A (eksternal)** dengan **Kode Program B (internal)** pada GPIO 33 (pull-down) — verifikasi keduanya menghasilkan logika yang identik (default LOW, HIGH saat ditekan)
+3. Diskusikan kelebihan dan keterbatasan masing-masing pendekatan: eksternal (butuh resistor tambahan, tetapi bisa dipasang di pin mana pun termasuk GPIO 34–39) dibanding internal (tanpa komponen tambahan, tetapi tidak tersedia pada pin input-only GPIO 34–39)
 
 ---
 
@@ -418,12 +351,18 @@ void loop() {
 **Tujuan:**
 Mahasiswa mampu mengidentifikasi permasalahan bouncing pada tombol mekanik dan mengimplementasikan debouncing berbasis software pada ESP32 dengan framework Arduino.
 
+**Skema Rangkaian:**
+
+| Komponen | Pin ESP32 | Keterangan |
+|---|---|---|
+| Pushbutton (tactile) | GPIO 25 | Satu kaki ke GPIO, kaki lain ke GND, gunakan `INPUT_PULLUP` |
+
 **Langkah Kerja:**
-1. Gunakan rangkaian pushbutton NO dari Percobaan 3
+1. Rangkai pushbutton sesuai skema di atas
 2. Implementasikan program dengan **dua variabel counter sekaligus** — satu tanpa debouncing (`counterNoDebounce`) dan satu dengan debouncing (`counterWithDebounce`) — sesuai kode di bawah
 3. Tekan tombol satu kali secara normal, amati dan bandingkan kedua nilai counter yang tampil bersamaan pada Serial Monitor
 4. Ulangi penekanan beberapa kali — amati bahwa `counterNoDebounce` sering bertambah lebih dari 1 untuk satu kali tekan (indikasi bouncing), sedangkan `counterWithDebounce` konsisten bertambah tepat 1
-5. Terapkan konsep debouncing yang sama (bagian "Dengan Debouncing" pada kode) pada fungsi `scanKeypad()` dari Percobaan 3
+5. Terapkan konsep debouncing yang sama (bagian "Dengan Debouncing" pada kode) pada tombol pull-down eksternal (GPIO 33) dari Percobaan 3 — perhatikan bahwa logikanya aktif HIGH, kebalikan dari pushbutton pada percobaan ini
 
 **Kode Program (Perbandingan Counter Tanpa vs Dengan Debouncing):**
 ```cpp
@@ -488,70 +427,99 @@ void loop() {
 | `counterWithDebounce` | Hanya bertambah saat `stableState` benar-benar berubah menjadi LOW setelah melewati periode debounce |
 | Blok "Tampilkan kedua nilai" | Mencetak kedua counter ke Serial Monitor hanya saat salah satu nilainya berubah, agar keduanya mudah dibandingkan secara langsung |
 
-**Tugas Akhir Modul 1:**
-Implementasikan sistem penghitung akses sederhana menggunakan matrix keypad 4x4 dengan debouncing yang telah diterapkan pada fungsi `scanKeypad()` — program harus mampu mendeteksi dan menghitung jumlah tombol valid yang ditekan secara akurat (tanpa duplikasi akibat bouncing), ditampilkan melalui Serial Monitor.
+**Analisis Setelah Program Berjalan:**
+1. Tekan tombol satu kali secara normal, catat nilai `counterNoDebounce` dan `counterWithDebounce` — hitung selisihnya sebagai indikasi jumlah bouncing yang terjadi
+2. Ulangi pengujian dengan gaya penekanan berbeda (cepat/tegas vs pelan/ragu-ragu), amati apakah pola bouncing pada `counterNoDebounce` berbeda
+3. Ubah nilai `DEBOUNCE_DELAY` menjadi lebih kecil (mis. 10ms) dan lebih besar (mis. 200ms), amati pada nilai berapa debounce mulai terasa "lambat merespons" atau bouncing mulai lolos tidak tersaring
 
 ---
 
-## F. Format Laporan Praktikum
+### PERCOBAAN 5 — Level Shifter: Pengukuran Tegangan Input dan Output (ESP32 + Framework Arduino)
 
-1. **Cover** — judul modul, nama, NIM, kelas
-2. **Tujuan Praktikum**
-3. **Dasar Teori Singkat** (parafrase, bukan salinan modul)
-4. **Alat dan Bahan**
-5. **Langkah Kerja & Skema Rangkaian** (sertakan foto rangkaian nyata dan tangkapan layar `platformio.ini` untuk tiap percobaan)
-6. **Kode Program** (lengkap, dengan komentar)
-7. **Hasil dan Pembahasan** (jawaban pertanyaan analisis tiap percobaan + hasil tugas akhir modul)
-8. **Kesimpulan**
-9. **Lampiran** (foto/video demo, dokumentasi tambahan)
+**Tujuan:**
+Mahasiswa mampu memahami fungsi level shifter sebagai konverter level tegangan logika, serta mengukur tegangan pada sisi input (LV) dan output (HV) menggunakan multimeter/voltmeter untuk beberapa variasi sinyal input dari ESP32.
 
----
+**Skema Rangkaian:**
 
-## G. Rubrik Penilaian
-
-| Aspek | Bobot | Kriteria |
+| Komponen | Pin ESP32 / Sumber | Keterangan |
 |---|---|---|
-| Instalasi PlatformIO & flashing STM32 (Blink) | 15% | Toolchain terinstal benar, program Blink berhasil di-flash via ST-Link |
-| Pemahaman & implementasi ESP-IDF (Blink) | 20% | Mampu menjelaskan struktur ESP-IDF dan berhasil menjalankan Blink |
-| Implementasi pembacaan berbagai jenis tombol | 25% | NO, NC, toggle, DIP switch, dan matrix keypad terbaca dengan benar |
-| Implementasi debouncing | 25% | Debouncing berfungsi, tidak ada duplikasi pembacaan akibat bouncing |
-| Laporan & analisis | 15% | Kelengkapan, kedalaman jawaban analisis, kerapian dokumentasi |
+| Level shifter — LV (VCC) | 3V3 | Tegangan referensi sisi rendah (Low Voltage) |
+| Level shifter — LV (GND) | GND | Ground sisi rendah |
+| Level shifter — HV (VCC) | 5V (pin VIN/5V pada ESP32 DevKit, dari USB) | Tegangan referensi sisi tinggi (High Voltage) |
+| Level shifter — HV (GND) | GND | Ground sisi tinggi, disatukan dengan GND ESP32 |
+| Level shifter — channel LV1 | GPIO 26 | Sinyal digital dari ESP32 (logika 3.3V), sebagai input yang akan dikonversi |
+| Multimeter (voltmeter DC) #1 | Probe (+) → pin LV1, probe (−) → GND | Mengukur tegangan sisi **input** (sebelum konversi) |
+| Multimeter (voltmeter DC) #2 | Probe (+) → pin HV1, probe (−) → GND | Mengukur tegangan sisi **output** (setelah konversi) |
+
+**`platformio.ini`:**
+```ini
+[env:esp32dev]
+platform = espressif32
+board = esp32dev
+framework = arduino
+```
+
+**Langkah Kerja:**
+1. Rangkai level shifter sesuai skema — pastikan sisi LV terhubung ke 3.3V/GND ESP32, dan sisi HV terhubung ke 5V/GND (GND kedua sisi tetap satu jalur)
+2. Hubungkan GPIO 26 ESP32 ke channel LV1
+3. **Build** dan **Upload** program di bawah — program akan menghasilkan 3 sample sinyal secara bergantian, masing-masing ditahan selama 10 detik dan diberi label pada Serial Monitor
+4. Untuk setiap sample, ukur dan catat tegangan pada pin **LV1** (input) dan **HV1** (output) menggunakan multimeter sebelum sample berikutnya muncul
+5. Bandingkan ketiga pasang hasil pengukuran (LV1 vs HV1) pada tiap sample
+
+**Kode Program (3 Sample Input Bergantian):**
+```cpp
+#include <Arduino.h>
+
+#define SIGNAL_PIN 26
+#define PWM_CHANNEL 0
+#define PWM_FREQ 1000
+#define PWM_RES 8 // 8-bit -> nilai duty 0-255
+
+void tampilkanSample(uint8_t duty, const char *label) {
+  ledcWrite(PWM_CHANNEL, duty);
+  Serial.printf("=== %s (duty %d/255) — ukur tegangan LV1 & HV1 sekarang ===\n", label, duty);
+  delay(10000); // tahan 10 detik untuk waktu pengukuran multimeter
+}
+
+void setup() {
+  Serial.begin(115200);
+  ledcSetup(PWM_CHANNEL, PWM_FREQ, PWM_RES);
+  ledcAttachPin(SIGNAL_PIN, PWM_CHANNEL);
+}
+
+void loop() {
+  tampilkanSample(0, "Sample 1: LOW (0%)");
+  tampilkanSample(128, "Sample 2: PWM ~50%");
+  tampilkanSample(255, "Sample 3: HIGH (100%)");
+}
+```
+
+**Penjelasan Kode:**
+| Bagian | Penjelasan |
+|---|---|
+| `ledcSetup()` + `ledcAttachPin()` | Mengonfigurasi channel PWM pada GPIO 26, digunakan untuk menghasilkan 3 sample tegangan yang berbeda |
+| `tampilkanSample(duty, label)` | Mengatur duty cycle PWM, mencetak label sample ke Serial Monitor, lalu menahan nilai tersebut selama 10 detik agar sempat diukur dengan multimeter |
+| Sample 1 (duty 0) | Sinyal LOW konstan (0V) — merepresentasikan kondisi digital LOW |
+| Sample 2 (duty 128) | Sinyal PWM ~50% duty cycle — multimeter DC akan membaca **nilai rata-rata**, bukan tegangan sesaat, karena frekuensi switching (1kHz) jauh lebih cepat dari respons alat ukur |
+| Sample 3 (duty 255) | Sinyal HIGH konstan (3.3V) — merepresentasikan kondisi digital HIGH |
+
+**Analisis Setelah Program Berjalan:**
+1. Catat tegangan LV1 dan HV1 pada ketiga sample, lalu hitung rasio HV1/LV1 untuk masing-masing sample
+2. Verifikasi apakah rasio tegangan HV1:LV1 pada ketiga sample konsisten mendekati rasio 5V:3.3V — ini menunjukkan bahwa level shifter hanya mengubah level tegangan, bukan bentuk/duty cycle sinyalnya
+3. Diskusikan mengapa nilai yang terbaca pada Sample 2 (PWM ~50%) berada di antara nilai Sample 1 dan Sample 3, alih-alih terbaca sebagai 0V atau tegangan maksimum
 
 ---
 
-## H. Referensi
+**Tugas Akhir Modul 1:**
+Implementasikan sistem penghitung akses sederhana menggunakan tombol dengan konfigurasi **pull-down eksternal** (GPIO 33, Percobaan 3) yang telah diterapkan debouncing (Percobaan 4) — program harus mampu mendeteksi dan menghitung jumlah penekanan valid secara akurat (tanpa duplikasi akibat bouncing, dengan logika aktif HIGH yang benar), ditampilkan melalui Serial Monitor.
+
+---
+
+## F. Referensi
 1. STMicroelectronics, *STM32F4 Reference Manual (RM0383/RM0368)*
-2. STMicroelectronics, *STM32F4xx HAL Driver User Manual*
-3. STMicroelectronics, *UM1724 — ST-Link/V2 User Manual*
+2. STMicroelectronics, *UM1724 — ST-Link/V2 User Manual*
+3. STM32duino, *Arduino Core for STM32 — Documentation*, https://github.com/stm32duino/Arduino_Core_STM32
 4. Espressif Systems, *ESP-IDF Programming Guide*, https://docs.espressif.com/
 5. PlatformIO Documentation, https://docs.platformio.org/
 6. Arduino Official Documentation, https://docs.arduino.cc/
-
----
-
-## I. Kumpulan Pertanyaan
-
-### Pertanyaan Pra-Praktikum
-1. Apa perbedaan mendasar antara framework Arduino dan framework HAL/ESP-IDF dalam pemrograman mikrokontroler?
-2. Mengapa STM32 Blackpill memerlukan programmer eksternal (ST-Link), sedangkan ESP32 dapat langsung diprogram melalui kabel USB?
-3. Sebutkan satu contoh aplikasi nyata yang cocok menggunakan saklar Normally Close (NC), dan jelaskan alasannya.
-
-### Pertanyaan/Analisis Percobaan 1 — STM32 Blackpill (Blink)
-1. Apa yang terjadi jika `__HAL_RCC_GPIOC_CLK_ENABLE()` dihapus dari program? Jelaskan berdasarkan hasil pengamatan.
-2. Bandingkan langkah upload program pada STM32 (via ST-Link) dengan proses upload yang biasa dilakukan pada board berbasis USB langsung — sebutkan minimal 2 perbedaan.
-3. Jelaskan fungsi tiap baris pada `platformio.ini` project Anda.
-
-### Pertanyaan/Analisis Percobaan 2 — ESP32 ESP-IDF (Blink)
-1. Jelaskan perbedaan antara `delay()` pada Arduino dan `vTaskDelay()` pada ESP-IDF, khususnya terkait FreeRTOS.
-2. Mengapa `app_main()` pada ESP-IDF disebut berjalan "sebagai task", sedangkan `loop()` pada Arduino tidak secara eksplisit demikian?
-3. Bandingkan waktu/kompleksitas proses build antara project ESP-IDF dan project HAL (Percobaan 1) berdasarkan pengamatan Anda.
-
-### Pertanyaan/Analisis Percobaan 3 — Macam-Macam Tombol
-1. Jelaskan mengapa logika pembacaan pushbutton NO dan limit switch NC berkebalikan meskipun keduanya menggunakan `INPUT_PULLUP`
-2. Berapa jumlah pin GPIO yang dibutuhkan untuk membaca 16 tombol pada keypad 4x4 menggunakan teknik scanning, dibandingkan jika setiap tombol disambungkan langsung ke satu GPIO tersendiri?
-3. Pada aplikasi apa DIP switch lebih sesuai digunakan dibandingkan pushbutton biasa?
-
-### Pertanyaan/Analisis Percobaan 4 — Debouncing
-1. Berdasarkan pengamatan, berapa selisih rata-rata antara `counterNoDebounce` dan `counterWithDebounce` untuk satu kali penekanan tombol?
-2. Jelaskan mengapa `counterWithDebounce` hanya bertambah setelah `stableState` melewati periode `DEBOUNCE_DELAY`, sedangkan `counterNoDebounce` tidak melalui validasi tersebut
-3. Jelaskan secara konsep bagaimana debouncing dapat dilakukan secara hardware (mis. menggunakan kapasitor/RC filter)
+7. Sparkfun, *Bi-Directional Logic Level Converter Hookup Guide*, https://learn.sparkfun.com/tutorials/bi-directional-logic-level-converter-hookup-guide

@@ -6,7 +6,26 @@
 **Platform:** ESP32 (Framework Arduino)
 **IDE:** VSCode + PlatformIO
 
-> **Catatan:** Modul ini melanjutkan penggunaan ESP32 dengan framework Arduino seperti pada Modul 1–3. Langkah instalasi VSCode, PlatformIO, dan driver USB-to-Serial tidak diulang di sini — lihat kembali **Modul 1, Bagian D**. Seluruh contoh kode pada modul ini mengasumsikan **Arduino-ESP32 core versi 3.x ke atas**, konsisten dengan Modul 2 dan 3 (API Timer dan Watchdog berbeda signifikan pada core versi 2.x).
+> **Catatan:** Modul ini melanjutkan penggunaan ESP32 dengan framework Arduino seperti pada Modul 1–3. Langkah instalasi VSCode, PlatformIO, dan driver USB-to-Serial tidak diulang di sini — lihat **[setup_vscode_platformio.md](setup_vscode_platformio.md)**. Seluruh contoh kode pada modul ini menggunakan platform PlatformIO resmi `espressif32` (Arduino-ESP32 **core versi 2.0.x**), konsisten dengan modul-modul lain dalam rangkaian praktikum ini — termasuk API Timer (`timerBegin`/`timerAttachInterrupt`/`timerAlarmWrite`) dan Watchdog (`esp_task_wdt_init`) versi core 2.x.
+
+---
+
+## Daftar Isi
+- [A. Capaian Pembelajaran](#a-capaian-pembelajaran)
+- [B. Alat dan Bahan](#b-alat-dan-bahan)
+- [C. Dasar Teori](#c-dasar-teori)
+  - [C.1 External Interrupt](#c1-external-interrupt)
+  - [C.2 Timer Interrupt](#c2-timer-interrupt)
+  - [C.3 Watchdog Timer (WDT)](#c3-watchdog-timer-wdt)
+  - [C.4 Multitasking dengan FreeRTOS](#c4-multitasking-dengan-freertos)
+- [D. Persiapan Sebelum Praktikum](#d-persiapan-sebelum-praktikum)
+- [E. Kegiatan Praktikum](#e-kegiatan-praktikum)
+  - [PERCOBAAN 1 — External Interrupt pada Kondisi Sistem Hang (Manual Recovery)](#percobaan-1--external-interrupt-pada-kondisi-sistem-hang-manual-recovery)
+  - [PERCOBAAN 2 — External Interrupt: Decoding Quadrature Encoder (Pulsa & Arah)](#percobaan-2--external-interrupt-decoding-quadrature-encoder-pulsa--arah)
+  - [PERCOBAAN 3 — Timer Interrupt](#percobaan-3--timer-interrupt)
+  - [PERCOBAAN 4 — Watchdog Timer](#percobaan-4--watchdog-timer)
+  - [PERCOBAAN 5 — Multitasking dengan FreeRTOS](#percobaan-5--multitasking-dengan-freertos)
+- [F. Referensi](#f-referensi)
 
 ---
 
@@ -61,7 +80,7 @@ Arduino-ESP32 core dibangun di atas **FreeRTOS**, sebuah RTOS (Real-Time Operati
 
 ## D. Persiapan Sebelum Praktikum
 
-1. Pastikan PlatformIO sudah terinstal (lihat **Modul 1, Bagian D.1–D.2**)
+1. Pastikan PlatformIO sudah terinstal (lihat **[setup_vscode_platformio.md](setup_vscode_platformio.md)**)
 2. Buat project baru untuk Modul 4:
    - Name: `modul4-interrupt-timer-rtos`
    - Board: **"Espressif ESP32 Dev Module"**
@@ -92,6 +111,14 @@ Mahasiswa mampu membuktikan bahwa external interrupt tetap dapat berjalan meskip
 |---|---|---|
 | LED (+resistor 220Ω) | GPIO 2 | Sebagai indikator visual sistem berjalan normal (akan dipakai kembali pada Percobaan 3 — Timer Interrupt) |
 | Pushbutton "Darurat" | GPIO 27 | `INPUT_PULLUP`, dipasang ke interrupt (trigger `FALLING`) |
+
+**`platformio.ini`:**
+```ini
+[env:esp32dev]
+platform = espressif32
+board = esp32dev
+framework = arduino
+```
 
 **Langkah Kerja:**
 1. Rangkai LED dan pushbutton sesuai skema
@@ -172,6 +199,14 @@ Mahasiswa mampu mengimplementasikan external interrupt untuk melakukan decoding 
 | Encoder — GND | GND | Pada modul referensi: kabel **Hitam** |
 
 > Modul motor+encoder dengan konektor JST 6-pin umumnya memiliki pasangan kabel: **Merah/Putih** untuk daya motor (+/−, tidak digunakan pada percobaan ini), **Kuning/Hijau** untuk Channel A/Channel B encoder, dan **Biru/Hitam** untuk VCC/GND encoder — mengacu pada motor referensi JGB37-520 ([Instructables: Closed-Loop Speed Control of a DC Motor With Encoder](https://www.instructables.com/Closed-Loop-Speed-Control-of-a-DC-Motor-With-Encod/)). **Pemetaan warna kabel dapat berbeda antar produsen** — selalu verifikasi ulang pada modul fisik Anda (mis. dengan multimeter untuk memastikan pasangan motor, dan uji langsung tiap kabel sinyal sambil memutar poros untuk memastikan mana Channel A/B) sebelum menyambungkan ke ESP32.
+
+**`platformio.ini`:**
+```ini
+[env:esp32dev]
+platform = espressif32
+board = esp32dev
+framework = arduino
+```
 
 **Langkah Kerja:**
 1. Rangkai encoder sesuai skema — hanya kabel encoder (VCC, GND, Channel A, Channel B) yang perlu disambungkan, kabel motor tidak digunakan pada percobaan ini
@@ -270,6 +305,14 @@ Mahasiswa mampu mengimplementasikan timer interrupt untuk menjalankan tugas peri
 |---|---|---|
 | LED (+resistor 220Ω) | GPIO 2 | Anoda ke GPIO, katoda ke GND melalui resistor |
 
+**`platformio.ini`:**
+```ini
+[env:esp32dev]
+platform = espressif32
+board = esp32dev
+framework = arduino
+```
+
 **Langkah Kerja:**
 1. Rangkai LED sesuai skema
 2. Implementasikan hardware timer yang memicu interrupt setiap 500ms
@@ -296,9 +339,10 @@ void setup()
     Serial.begin(115200);
     pinMode(LED_PIN, OUTPUT);
 
-    timer = timerBegin(1000000);       // frekuensi timer 1 MHz -> 1 tick = 1 us
-    timerAttachInterrupt(timer, &onTimer);
-    timerAlarm(timer, 500000, true, 0); // alarm setiap 500.000 tick (500ms), autoreload
+    timer = timerBegin(0, 80, true);             // timer 0, prescaler 80 (80MHz/80 = 1MHz -> 1 tick = 1us), count up
+    timerAttachInterrupt(timer, &onTimer, true); // edge-triggered (satu-satunya mode yang didukung ESP32)
+    timerAlarmWrite(timer, 500000, true);        // alarm setiap 500.000 tick (500ms), autoreload
+    timerAlarmEnable(timer);
 
     Serial.println("Timer interrupt aktif, LED akan toggle tiap 500ms");
 }
@@ -317,9 +361,10 @@ void loop()
 **Penjelasan Kode:**
 | Bagian | Penjelasan |
 |---|---|
-| `timerBegin(1000000)` | Menginisialisasi hardware timer dengan frekuensi tick 1 MHz (setiap tick = 1 mikrodetik) |
-| `timerAttachInterrupt(timer, &onTimer)` | Mendaftarkan fungsi `onTimer()` sebagai ISR yang dipanggil setiap kali timer mencapai nilai alarm |
-| `timerAlarm(timer, 500000, true, 0)` | Mengatur nilai alarm 500.000 tick (setara 500ms pada frekuensi 1MHz), `true` mengaktifkan autoreload (berulang otomatis) |
+| `timerBegin(0, 80, true)` | Menginisialisasi hardware timer nomor 0 (ESP32 memiliki 4 timer hardware, indeks 0–3) dengan prescaler 80 (clock dasar 80MHz dibagi 80 = 1MHz, setiap tick = 1 mikrodetik), `true` = mode hitung naik (count up) |
+| `timerAttachInterrupt(timer, &onTimer, true)` | Mendaftarkan fungsi `onTimer()` sebagai ISR; parameter `true` menandakan mode edge-triggered |
+| `timerAlarmWrite(timer, 500000, true)` | Mengatur nilai alarm 500.000 tick (setara 500ms pada frekuensi 1MHz), `true` mengaktifkan autoreload (berulang otomatis) |
+| `timerAlarmEnable(timer)` | Mengaktifkan alarm agar timer mulai menghasilkan interrupt sesuai nilai yang diatur |
 | `toggleFlag` (flag, bukan langsung `digitalWrite` di ISR) | Praktik terbaik — ISR hanya menandai bahwa event terjadi, sedangkan aksi yang lebih "berat" (toggle LED, print) dilakukan di `loop()` |
 
 ---
@@ -328,6 +373,16 @@ void loop()
 
 **Tujuan:**
 Mahasiswa mampu mengimplementasikan watchdog timer untuk mendeteksi dan memulihkan sistem dari kondisi hang.
+
+> Percobaan ini tidak memerlukan rangkaian tambahan — cukup gunakan board ESP32 yang sudah terhubung ke PC via USB.
+
+**`platformio.ini`:**
+```ini
+[env:esp32dev]
+platform = espressif32
+board = esp32dev
+framework = arduino
+```
 
 **Langkah Kerja:**
 1. Implementasikan inisialisasi Task Watchdog Timer dengan timeout 3 detik
@@ -347,13 +402,8 @@ void setup()
 {
     Serial.begin(115200);
 
-    esp_task_wdt_config_t wdtConfig = {
-        .timeout_ms = WDT_TIMEOUT_S * 1000,
-        .idle_core_mask = 0,
-        .trigger_panic = true,
-    };
-    esp_task_wdt_init(&wdtConfig);
-    esp_task_wdt_add(NULL); // daftarkan task saat ini (loop utama) ke watchdog
+    esp_task_wdt_init(WDT_TIMEOUT_S, true); // timeout dalam detik, true = panic/restart otomatis saat timeout
+    esp_task_wdt_add(NULL);                 // daftarkan task saat ini (loop utama) ke watchdog
 
     Serial.println("Watchdog Timer aktif (timeout 3 detik)");
 }
@@ -372,7 +422,7 @@ void loop()
 **Penjelasan Kode:**
 | Bagian | Penjelasan |
 |---|---|
-| `esp_task_wdt_config_t` | Struktur konfigurasi watchdog — `timeout_ms` menentukan batas waktu, `trigger_panic = true` membuat sistem restart otomatis saat timeout terlampaui |
+| `esp_task_wdt_init(WDT_TIMEOUT_S, true)` | Menginisialisasi Task Watchdog dengan batas waktu dalam **detik**, parameter kedua (`true`) membuat sistem panic/restart otomatis saat timeout terlampaui |
 | `esp_task_wdt_add(NULL)` | Mendaftarkan task yang sedang berjalan (dalam hal ini loop utama Arduino) agar diawasi oleh watchdog |
 | `esp_task_wdt_reset()` | "Memberi makan" watchdog — memberi tahu sistem bahwa task masih berjalan normal, sehingga timer watchdog direset kembali ke 0 |
 | `while (true) {}` (disimulasikan) | Program berhenti merespons — karena `esp_task_wdt_reset()` tidak lagi terpanggil, watchdog akan timeout dan me-restart sistem secara otomatis |
@@ -386,6 +436,14 @@ Mahasiswa mampu mengimplementasikan beberapa task yang berjalan "paralel" menggu
 
 **Skema Rangkaian:**
 Gunakan rangkaian LED dari Percobaan 3 (GPIO 2), tambahkan pushbutton pada GPIO 27 (`INPUT_PULLUP`) untuk latihan tambahan.
+
+**`platformio.ini`:**
+```ini
+[env:esp32dev]
+platform = espressif32
+board = esp32dev
+framework = arduino
+```
 
 **Langkah Kerja:**
 1. Implementasikan dua task terpisah: satu untuk toggle LED (setiap 500ms), satu untuk mencetak pesan ke Serial (setiap 1 detik)
@@ -500,72 +558,9 @@ Rancang sistem yang menggabungkan seluruh topik modul ini dalam satu program: di
 
 ---
 
-## F. Format Laporan Praktikum
-
-1. **Cover** — judul modul, nama, NIM, kelas
-2. **Tujuan Praktikum**
-3. **Dasar Teori Singkat** (parafrase, bukan salinan modul)
-4. **Alat dan Bahan**
-5. **Langkah Kerja & Skema Rangkaian** (sertakan foto rangkaian nyata)
-6. **Kode Program** (lengkap, dengan komentar)
-7. **Hasil dan Pembahasan** (data pengamatan, jawaban pertanyaan analisis, hasil tugas akhir modul)
-8. **Kesimpulan**
-9. **Lampiran** (foto/video demo, dokumentasi tambahan)
-
----
-
-## G. Rubrik Penilaian
-
-| Aspek | Bobot | Kriteria |
-|---|---|---|
-| Implementasi manual recovery via external interrupt | 20% | Tombol darurat berfungsi memulihkan sistem meskipun `loop()` dalam kondisi hang, analisis perbandingan dengan watchdog tepat |
-| Implementasi external interrupt (encoder) | 15% | Penghitungan pulsa dan deteksi arah berjalan benar, ISR ditulis sesuai praktik terbaik |
-| Implementasi timer interrupt | 15% | LED toggle konsisten via timer, pola flag+loop diterapkan dengan benar |
-| Implementasi watchdog timer | 20% | Watchdog berfungsi, sistem berhasil diamati restart otomatis saat disimulasikan hang |
-| Implementasi multitasking FreeRTOS | 15% | Dua task (atau lebih dengan queue) berjalan paralel dengan benar |
-| Laporan & analisis | 15% | Kelengkapan, kedalaman analisis, kerapian dokumentasi |
-
----
-
-## H. Referensi
+## F. Referensi
 1. Espressif Systems, *ESP32 Technical Reference Manual — Interrupt, Timer, Task Watchdog*
 2. Espressif Systems, *ESP-IDF Programming Guide — FreeRTOS, Task Watchdog Timer*, https://docs.espressif.com/projects/esp-idf/
 3. Arduino-ESP32 Core Documentation — Timer, https://docs.espressif.com/projects/arduino-esp32/
 4. FreeRTOS Official Documentation — Queue Management, https://www.freertos.org/
 5. sss2022, *Closed-Loop Speed Control of a DC Motor With Encoder Using a Discrete PI Controller on Arduino*, Instructables — rujukan wiring encoder & motor JGB37-520, https://www.instructables.com/Closed-Loop-Speed-Control-of-a-DC-Motor-With-Encod/
-
----
-
-## I. Kumpulan Pertanyaan
-
-### Pertanyaan Pra-Praktikum
-1. Jelaskan perbedaan mendasar antara external interrupt dan timer interrupt dalam hal apa yang memicu terjadinya interrupt
-2. Mengapa watchdog timer penting pada sistem embedded yang beroperasi tanpa pengawasan manusia secara terus-menerus (mis. di lapangan/lokasi terpencil)?
-3. Jelaskan mengapa multitasking pada FreeRTOS disebut sebagai "paralel semu" (pseudo-parallel) pada single-core, namun dapat benar-benar paralel pada ESP32 yang memiliki dua core
-
-### Pertanyaan/Analisis Percobaan 1 — External Interrupt pada Kondisi Sistem Hang
-1. Jelaskan mengapa ISR pada percobaan ini memanggil `esp_restart()` secara langsung, alih-alih hanya mengatur flag seperti pada Percobaan 3 (Timer Interrupt)
-2. Berdasarkan pengamatan, apakah tombol darurat tetap berhasil me-restart sistem saat `loop()` sedang terjebak dalam `while(true) {}`? Jelaskan mengapa hal ini bisa terjadi
-3. Bandingkan Watchdog Timer (Percobaan 4) dengan tombol darurat berbasis interrupt pada percobaan ini — sebutkan satu skenario di mana masing-masing lebih unggul dibanding yang lain
-4. Dalam kondisi apa mekanisme pemulihan berbasis interrupt pada percobaan ini **tidak akan berfungsi**? (Petunjuk: kaitkan dengan konsep `noInterrupts()`/critical section pada C.1)
-
-### Pertanyaan/Analisis Percobaan 2 — External Interrupt (Encoder)
-1. Jelaskan bagaimana pembacaan Channel B di dalam ISR Channel A dapat menentukan arah putaran encoder (prinsip decoding quadrature)
-2. Mengapa `portMUX_TYPE` beserta `portENTER_CRITICAL_ISR()`/`portENTER_CRITICAL()` digunakan alih-alih `noInterrupts()`/`interrupts()` pada ESP32? Jelaskan kaitannya dengan arsitektur dual-core ESP32
-3. Mengapa pembacaan dan pelaporan nilai pulsa dilakukan menggunakan pola `millis()` non-blocking dengan interval 100ms, bukan `delay()` di dalam `loop()`?
-4. Informasi apa saja yang masih dibutuhkan agar nilai pulsa mentah pada percobaan ini dapat dikonversi menjadi kecepatan putar (RPM)? (Tidak perlu diimplementasikan — cukup jelaskan secara konsep, akan dibahas pada Modul 5)
-
-### Pertanyaan/Analisis Percobaan 3 — Timer Interrupt
-1. Jelaskan mengapa ISR pada percobaan ini (`onTimer()`) hanya mengatur flag `toggleFlag`, tidak langsung memanggil `digitalWrite()`
-2. Apa perbedaan hasil yang akan teramati jika parameter `autoreload` pada `timerAlarm()` diatur `false`?
-3. Bandingkan konsistensi interval LED berkedip antara pendekatan timer interrupt pada percobaan ini dengan pendekatan `delay()` biasa — jelaskan skenario di mana `delay()` dapat menyebabkan interval menjadi tidak presisi
-
-### Pertanyaan/Analisis Percobaan 4 — Watchdog Timer
-1. Jelaskan apa yang akan terjadi jika `esp_task_wdt_reset()` dihapus dari `loop()`, meskipun tidak ada simulasi `while(true){}`
-2. Mengapa nilai timeout watchdog perlu dipilih dengan cermat — jelaskan risiko jika nilainya terlalu singkat maupun terlalu lama
-3. Sebutkan satu skenario nyata pada sistem embedded di mana watchdog timer berperan penting untuk menjaga keandalan sistem
-
-### Pertanyaan/Analisis Percobaan 5 — Multitasking FreeRTOS
-1. Jelaskan apa yang akan terjadi jika kedua task pada kode utama (`taskBlink` dan `taskSerial`) dijalankan pada core yang sama (`coreID` yang sama), dibandingkan pada core berbeda
-2. Mengapa `vTaskDelay()` digunakan alih-alih `delay()` di dalam task FreeRTOS?
-3. Jelaskan keuntungan penggunaan queue (`xQueueSend`/`xQueueReceive`) untuk komunikasi antar task dibandingkan menggunakan variabel global biasa

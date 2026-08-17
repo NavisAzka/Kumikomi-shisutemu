@@ -6,7 +6,27 @@
 **Platform:** ESP32 (Framework Arduino)
 **IDE:** VSCode + PlatformIO
 
-> **Catatan:** Modul ini merupakan modul kapstone yang menggabungkan **Modul 2** (motor DC + PWM) dan **Modul 4 Percobaan 2** (quadrature encoder via external interrupt). Pastikan rangkaian motor+encoder+driver dari kedua modul tersebut sudah berfungsi sebelum memulai modul ini. Seluruh contoh kode mengasumsikan **Arduino-ESP32 core versi 3.x ke atas**, konsisten dengan Modul 2–4.
+> **Catatan:** Modul ini merupakan modul kapstone yang menggabungkan **Modul 2** (motor DC + PWM) dan **Modul 4 Percobaan 2** (quadrature encoder via external interrupt). Pastikan rangkaian motor+encoder+driver dari kedua modul tersebut sudah berfungsi sebelum memulai modul ini. Seluruh contoh kode menggunakan platform PlatformIO resmi `espressif32` (Arduino-ESP32 **core versi 2.0.x**), konsisten dengan Modul 2–4, termasuk API LEDC berbasis channel (`ledcSetup`/`ledcAttachPin`/`ledcWrite`) untuk kontrol PWM motor DC.
+
+---
+
+## Daftar Isi
+- [A. Capaian Pembelajaran](#a-capaian-pembelajaran)
+- [B. Alat dan Bahan](#b-alat-dan-bahan)
+- [C. Dasar Teori](#c-dasar-teori)
+  - [C.1 Dari Pulsa Encoder ke RPM](#c1-dari-pulsa-encoder-ke-rpm)
+  - [C.2 Filtering Sederhana — Low-Pass Filter Alpha](#c2-filtering-sederhana--low-pass-filter-alpha)
+  - [C.3 Filtering Lanjut — Kalman Filter](#c3-filtering-lanjut--kalman-filter)
+  - [C.4 Sistem Kontrol Closed-Loop](#c4-sistem-kontrol-closed-loop)
+  - [C.5 Kontrol PID](#c5-kontrol-pid)
+- [D. Persiapan Sebelum Praktikum](#d-persiapan-sebelum-praktikum)
+- [E. Kegiatan Praktikum](#e-kegiatan-praktikum)
+  - [PERCOBAAN 1 — Dari Pulsa ke RPM (Konversi & Kalibrasi)](#percobaan-1--dari-pulsa-ke-rpm-konversi--kalibrasi)
+  - [PERCOBAAN 2 — Filtering Sederhana dengan Alpha (Low-Pass Filter)](#percobaan-2--filtering-sederhana-dengan-alpha-low-pass-filter)
+  - [PERCOBAAN 3 — Filtering dengan Kalman Filter](#percobaan-3--filtering-dengan-kalman-filter)
+  - [PERCOBAAN 4 — Kontrol Closed-Loop: On-Off vs Proportional (P)](#percobaan-4--kontrol-closed-loop-on-off-vs-proportional-p)
+  - [PERCOBAAN 5 — Kontrol PID Lengkap & Tuning](#percobaan-5--kontrol-pid-lengkap--tuning)
+- [F. Referensi](#f-referensi)
 
 ---
 
@@ -110,7 +130,7 @@ Beberapa pertimbangan praktis dalam implementasi PID pada sistem nyata:
 
 ## D. Persiapan Sebelum Praktikum
 
-1. Pastikan PlatformIO sudah terinstal (lihat **Modul 1, Bagian D.1–D.2**)
+1. Pastikan PlatformIO sudah terinstal (lihat **[setup_vscode_platformio.md](setup_vscode_platformio.md)**)
 2. Instal ekstensi **Serial Plotter** pada VSCode — dibutuhkan untuk memvisualisasikan data pada seluruh Percobaan modul ini, karena VSCode (berbeda dari Arduino IDE) tidak memiliki Serial Plotter bawaan:
    - Buka **Extensions** pada VSCode (`Ctrl+Shift+X`), cari **"Serial Plotter"** (oleh badlogic), klik **Install**
    - Repository resmi: https://github.com/badlogic/serial-plotter
@@ -145,6 +165,14 @@ Mahasiswa mampu mengonversi data pulsa mentah dari encoder (Modul 4 Percobaan 2)
 
 **Skema Rangkaian:**
 Gunakan rangkaian encoder yang sama dengan **Modul 4 Percobaan 2** (Channel A = GPIO 32, Channel B = GPIO 33).
+
+**`platformio.ini`:**
+```ini
+[env:esp32dev]
+platform = espressif32
+board = esp32dev
+framework = arduino
+```
 
 **Langkah Kerja:**
 1. Gunakan kembali kode decoding quadrature dari Modul 4 Percobaan 2 sebagai basis
@@ -235,6 +263,14 @@ void loop()
 
 **Tujuan:**
 Mahasiswa mampu mengidentifikasi noise pada sinyal RPM mentah dan menerapkan low-pass filter alpha untuk menghaluskannya.
+
+**`platformio.ini`:**
+```ini
+[env:esp32dev]
+platform = espressif32
+board = esp32dev
+framework = arduino
+```
 
 **Langkah Kerja:**
 1. Gunakan program dari Percobaan 1, amati nilai RPM pada **Serial Plotter** (bukan hanya Serial Monitor) untuk melihat fluktuasi secara visual
@@ -337,6 +373,14 @@ void loop()
 
 **Tujuan:**
 Mahasiswa mampu menerapkan Kalman filter 1D sebagai metode filtering alternatif untuk sinyal RPM, serta membandingkan hasilnya dengan low-pass filter alpha pada Percobaan 2.
+
+**`platformio.ini`:**
+```ini
+[env:esp32dev]
+platform = espressif32
+board = esp32dev
+framework = arduino
+```
 
 **Langkah Kerja:**
 1. Gunakan kembali program dari Percobaan 1–2
@@ -480,6 +524,14 @@ Mahasiswa mampu mengimplementasikan dan membandingkan kontrol on-off dengan kont
 **Skema Rangkaian:**
 Gunakan rangkaian motor DC + driver dari **Modul 2** (ENA = GPIO 25, IN1 = GPIO 26, IN2 = GPIO 27), digabung dengan encoder dan filtering RPM dari Percobaan 1–3 modul ini (filter alpha atau Kalman, keduanya dapat digunakan sebagai sumber RPM terfilter).
 
+**`platformio.ini`:**
+```ini
+[env:esp32dev]
+platform = espressif32
+board = esp32dev
+framework = arduino
+```
+
 **Langkah Kerja:**
 1. Tentukan target RPM tetap (mis. 100 RPM) langsung di kode program
 2. Implementasikan kontrol **on-off**: motor diberi PWM maksimum jika RPM terfilter di bawah target, dan dimatikan jika sudah mencapai/melebihi target — amati osilasi kecepatan motor di sekitar target pada Serial Plotter
@@ -513,6 +565,7 @@ float filteredRPM = 0.0;
 #define IN1 26
 #define IN2 27
 
+const int pwmChannel = 0;
 const int pwmFreq = 1000;
 const int pwmResolution = 8; // 0-255
 
@@ -555,7 +608,7 @@ void applyControl(float rpmInput)
     }
 
     pwmOutput = constrain(pwmOutput, 0, 255);
-    ledcWrite(ENA, pwmOutput);
+    ledcWrite(pwmChannel, pwmOutput);
 
     Serial.print(">");
     Serial.print("Target:");
@@ -577,7 +630,8 @@ void setup()
 
     pinMode(IN1, OUTPUT);
     pinMode(IN2, OUTPUT);
-    ledcAttach(ENA, pwmFreq, pwmResolution);
+    ledcSetup(pwmChannel, pwmFreq, pwmResolution);
+    ledcAttachPin(ENA, pwmChannel);
 
     digitalWrite(IN1, HIGH);
     digitalWrite(IN2, LOW);
@@ -636,6 +690,14 @@ Mahasiswa mampu mengimplementasikan kontrol PID lengkap untuk mengatur kecepatan
 | Tombol Naik Target RPM | GPIO 14 | `INPUT_PULLUP` |
 | Tombol Turun Target RPM | GPIO 16 | `INPUT_PULLUP` |
 
+**`platformio.ini`:**
+```ini
+[env:esp32dev]
+platform = espressif32
+board = esp32dev
+framework = arduino
+```
+
 **Langkah Kerja:**
 1. Gabungkan encoder (Percobaan 1), filtering alpha (Percobaan 2), dan kontrol motor (Percobaan 4) menjadi satu program PID lengkap sesuai kode di bawah
 2. Rangkai dua tombol untuk menaikkan/menurunkan target RPM secara interaktif saat program berjalan
@@ -668,6 +730,7 @@ constexpr uint8_t ENA_PIN = 25;
 constexpr uint8_t IN1_PIN = 26;
 constexpr uint8_t IN2_PIN = 27;
 
+constexpr int PWM_CHANNEL = 0;
 constexpr uint32_t PWM_FREQUENCY = 1000;
 constexpr uint8_t PWM_RESOLUTION = 8;
 
@@ -758,7 +821,7 @@ void applyMotorPWM(int pwm)
 
     if (pwm == 0)
     {
-        ledcWrite(ENA_PIN, 0);
+        ledcWrite(PWM_CHANNEL, 0);
         digitalWrite(IN1_PIN, LOW);
         digitalWrite(IN2_PIN, LOW);
         return;
@@ -766,7 +829,7 @@ void applyMotorPWM(int pwm)
 
     digitalWrite(IN1_PIN, HIGH);
     digitalWrite(IN2_PIN, LOW);
-    ledcWrite(ENA_PIN, pwm);
+    ledcWrite(PWM_CHANNEL, pwm);
 }
 
 void stopMotor()
@@ -819,7 +882,8 @@ void setup()
 
     pinMode(IN1_PIN, OUTPUT);
     pinMode(IN2_PIN, OUTPUT);
-    ledcAttach(ENA_PIN, PWM_FREQUENCY, PWM_RESOLUTION); // LEDC API baru (core 3.x)
+    ledcSetup(PWM_CHANNEL, PWM_FREQUENCY, PWM_RESOLUTION); // konfigurasi channel PWM (core 2.x)
+    ledcAttachPin(ENA_PIN, PWM_CHANNEL);                   // hubungkan channel ke pin ENA
 
     stopMotor();
     previousSampleTime = millis();
@@ -892,74 +956,10 @@ Lakukan proses tuning PID secara sistematis: catat respons sistem (overshoot, se
 
 ---
 
-## F. Format Laporan Praktikum
-
-1. **Cover** — judul modul, nama, NIM, kelas
-2. **Tujuan Praktikum**
-3. **Dasar Teori Singkat** (parafrase, bukan salinan modul)
-4. **Alat dan Bahan**
-5. **Langkah Kerja & Skema Rangkaian** (sertakan foto rangkaian nyata)
-6. **Kode Program** (lengkap, dengan komentar)
-7. **Hasil dan Pembahasan** (nilai kalibrasi `PULSES_PER_REV`, grafik Serial Plotter untuk tiap percobaan termasuk perbandingan filter alpha vs Kalman, tabel hasil tuning PID, jawaban pertanyaan analisis)
-8. **Kesimpulan**
-9. **Lampiran** (foto/video demo, dokumentasi tambahan)
-
----
-
-## G. Rubrik Penilaian
-
-| Aspek | Bobot | Kriteria |
-|---|---|---|
-| Konversi pulsa ke RPM & kalibrasi | 10% | `PULSES_PER_REV` dikalibrasi dengan benar, nilai RPM sesuai kecepatan motor sebenarnya |
-| Implementasi filtering alpha | 10% | Filter berfungsi, analisis trade-off nilai α tepat |
-| Implementasi filtering Kalman | 15% | Kalman filter berfungsi, analisis pengaruh Q/R dan perbandingan dengan filter alpha tepat |
-| Implementasi kontrol on-off & P | 15% | Kedua mode kontrol berjalan, perbedaan perilaku (osilasi vs steady-state error) teramati dan dijelaskan dengan benar |
-| Implementasi PID lengkap | 20% | PID berjalan, target RPM dapat diubah interaktif, integral clamping & PWM minimum diterapkan dengan benar |
-| Tugas akhir modul (tuning sistematis) | 15% | Minimal 3 kombinasi parameter diuji dan dibandingkan dengan kriteria yang jelas |
-| Laporan & analisis | 15% | Kelengkapan, kedalaman analisis, kerapian dokumentasi |
-
----
-
-## H. Referensi
+## F. Referensi
 1. sss2022, *Closed-Loop Speed Control of a DC Motor With Encoder Using a Discrete PI Controller on Arduino*, Instructables — rujukan formula RPM, filter, dan struktur kontrol PI, https://www.instructables.com/Closed-Loop-Speed-Control-of-a-DC-Motor-With-Encod/
 2. Greg Welch & Gary Bishop, *An Introduction to the Kalman Filter*, University of North Carolina at Chapel Hill — referensi dasar teori Kalman filter
 3. Espressif Systems, *ESP32 Arduino Core Documentation — LEDC*, https://docs.espressif.com/projects/arduino-esp32/
 4. Katsuhiko Ogata, *Modern Control Engineering*, Pearson — referensi dasar teori kontrol PID
 5. PlatformIO Documentation, https://docs.platformio.org/
 6. badlogic, *Serial Plotter — VSCode Extension*, digunakan untuk visualisasi data Serial Plotter pada seluruh Percobaan modul ini, https://github.com/badlogic/serial-plotter
-
----
-
-## I. Kumpulan Pertanyaan
-
-### Pertanyaan Pra-Praktikum
-1. Mengapa jumlah pulsa per putaran pada poros output motor gearbox berbeda dari CPR (Counts Per Revolution) encoder itu sendiri?
-2. Jelaskan trade-off mendasar antara kehalusan sinyal (smoothing) dan kecepatan respons (lag) yang berlaku baik pada filter alpha maupun Kalman filter
-3. Sebutkan kekurangan kontrol on-off dan kontrol Proportional (P) yang masing-masing diatasi oleh komponen Integral dan Derivative pada PID
-
-### Pertanyaan/Analisis Percobaan 1 — Dari Pulsa ke RPM
-1. Jelaskan mengapa kalibrasi `PULSES_PER_REV` sebaiknya dilakukan dengan memutar poros beberapa kali putaran penuh (mis. 10 putaran), bukan hanya 1 putaran
-2. Apa yang akan terjadi pada nilai RPM yang dihitung jika `SAMPLE_INTERVAL_MS` diperkecil secara drastis (mis. menjadi 5ms)? Jelaskan kaitannya dengan resolusi/presisi pembacaan pada kecepatan rendah
-3. Mengapa nilai RPM perlu dihitung dari `deltaCount` (selisih antar sampling), bukan dari `encoderCount` total sejak program dimulai?
-
-### Pertanyaan/Analisis Percobaan 2 — Filtering Sederhana dengan Alpha
-1. Berdasarkan pengamatan Serial Plotter, jelaskan perbedaan visual antara RPM mentah dan RPM terfilter pada nilai α yang besar (mis. 0.9) dibandingkan α kecil (mis. 0.3)
-2. Pada skenario apa nilai α yang terlalu besar dapat merugikan performa sistem kontrol yang akan dibangun pada Percobaan 4–5?
-3. Sebutkan satu kelebihan utama filter alpha dibandingkan Kalman filter (Percobaan 3), ditinjau dari sisi kemudahan implementasi
-
-### Pertanyaan/Analisis Percobaan 3 — Filtering dengan Kalman Filter
-1. Jelaskan mengapa Kalman gain (`K`) pada percobaan ini dihitung ulang setiap siklus, alih-alih menggunakan nilai bobot tetap seperti filter alpha
-2. Berdasarkan pengamatan, apa yang terjadi pada hasil filter saat nilai `R` (measurement noise) diperbesar secara signifikan? Kaitkan dengan rumus `K = P / (P + R)`
-3. Bandingkan hasil filter alpha (Percobaan 2) dan Kalman filter pada percobaan ini terhadap sinyal RPM yang sama — dalam kondisi apa keduanya menghasilkan hasil yang hampir serupa, dan dalam kondisi apa terlihat berbeda signifikan?
-
-### Pertanyaan/Analisis Percobaan 4 — Kontrol Closed-Loop (On-Off vs Proportional)
-1. Jelaskan mengapa kontrol on-off menghasilkan osilasi RPM di sekitar target, sedangkan kontrol P menghasilkan respons yang lebih halus
-2. Berdasarkan pengamatan, apakah kontrol P berhasil membuat RPM aktual sama persis dengan target? Jelaskan fenomena steady-state error yang teramati
-3. Apa yang akan terjadi jika nilai Kp pada kontrol P diperbesar secara signifikan? Jelaskan potensi risikonya terhadap kestabilan sistem
-
-### Pertanyaan/Analisis Percobaan 5 — Kontrol PID Lengkap & Tuning
-1. Jelaskan berdasarkan hasil tuning Anda: apa efek yang teramati saat komponen Integral (Ki) ditambahkan ke sistem yang sebelumnya hanya menggunakan Proportional (dari Percobaan 4)?
-2. Jelaskan efek `INTEGRAL_MIN`/`INTEGRAL_MAX` (integral clamping) berdasarkan pengamatan pada langkah 5 — apa yang terjadi jika target RPM diturunkan tiba-tiba ke 0 tanpa clamping ini?
-3. Mengapa `PWM_MIN_RUN` diperlukan pada sistem ini, dan bagaimana Anda menentukan nilai yang tepat untuk motor yang digunakan?
-4. Berdasarkan latihan tambahan (mengganti filter alpha dengan Kalman filter), apakah terdapat perbedaan signifikan pada respons kontrol PID? Jelaskan alasannya
-5. Berdasarkan Tugas Akhir Modul, kombinasi Kp/Ki/Kd mana yang memberikan hasil terbaik menurut kriteria Anda? Jelaskan alasannya berdasarkan data yang diperoleh

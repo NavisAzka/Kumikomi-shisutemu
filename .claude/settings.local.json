@@ -2,7 +2,15 @@
   "permissions": {
     "allow": [
       "WebFetch(domain:www.instructables.com)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:registry.platformio.org)",
+      "WebSearch",
+      "Bash(pandoc -t markdown \"Modul_Praktikum_Aktuator_ESP32.docx\" -o /tmp/test1.md)",
+      "Read(//tmp/**)",
+      "PowerShell(Get-Command pandoc -ErrorAction SilentlyContinue)",
+      "PowerShell(Get-Command soffice -ErrorAction SilentlyContinue)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(python -c ' *)"
     ]
   }
 }
