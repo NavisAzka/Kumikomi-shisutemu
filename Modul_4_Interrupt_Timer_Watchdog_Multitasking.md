@@ -25,7 +25,8 @@
   - [PERCOBAAN 3 — Timer Interrupt](#percobaan-3--timer-interrupt)
   - [PERCOBAAN 4 — Watchdog Timer](#percobaan-4--watchdog-timer)
   - [PERCOBAAN 5 — Multitasking dengan FreeRTOS](#percobaan-5--multitasking-dengan-freertos)
-- [F. Referensi](#f-referensi)
+- [F. Tugas Pasca Praktikum (Simulasi Wokwi)](#f-tugas-pasca-praktikum-simulasi-wokwi)
+- [G. Referensi](#g-referensi)
 
 ---
 
@@ -67,14 +68,22 @@ Konsep penting terkait interrupt pada ESP32:
 - **Proteksi variabel bersama (`portMUX_TYPE`):** karena ESP32 memiliki dua core, sepasang fungsi `noInterrupts()`/`interrupts()` (yang hanya menonaktifkan interrupt pada satu core) tidak cukup aman untuk melindungi variabel yang diakses bersama oleh ISR dan `loop()`. Pendekatan yang benar pada ESP32 adalah menggunakan **critical section** berbasis `portMUX_TYPE` beserta `portENTER_CRITICAL_ISR()`/`portEXIT_CRITICAL_ISR()` (di dalam ISR) dan `portENTER_CRITICAL()`/`portEXIT_CRITICAL()` (di luar ISR), yang benar-benar aman terhadap akses simultan dari kedua core
 - **Interrupt tetap berjalan meski program hang:** karena ISR dipicu di level hardware, ISR akan tetap dieksekusi meskipun `loop()` sedang terjebak dalam kondisi blocking/infinite loop, selama interrupt global tidak dinonaktifkan — sifat ini dapat dimanfaatkan sebagai mekanisme pemulihan darurat (lihat Percobaan 1)
 
+![Gambar 1: Diagram alur eksekusi program utama yang dijeda sesaat oleh ISR saat interrupt terjadi, lalu kembali melanjutkan program utama](img/diagram_alur_isr.png)
+
 ### C.2 Timer Interrupt
 Selain interrupt yang dipicu oleh perubahan sinyal eksternal, ESP32 memiliki **hardware timer** internal yang dapat memicu interrupt secara **periodik** berdasarkan hitungan waktu, tanpa bergantung pada sinyal dari luar. Timer interrupt memungkinkan tugas periodik (mis. membaca sensor tiap interval tertentu) dijalankan secara presisi **tanpa memblokir** program utama — berbeda dengan `delay()` yang menghentikan seluruh eksekusi program selama periode tunggu.
+
+![Gambar 2: Diagram garis waktu (timeline) yang membandingkan task periodik menggunakan `delay()` (blocking) vs timer interrupt (non-blocking)](img/timeline_delay_vs_timer.png)
 
 ### C.3 Watchdog Timer (WDT)
 Watchdog Timer adalah timer khusus yang akan **me-reset sistem secara otomatis** jika tidak "diberi makan" (direset ulang) dalam periode waktu tertentu. Tujuannya adalah menjaga keandalan sistem embedded — jika program mengalami *hang* (macet, mis. akibat infinite loop atau kondisi tak terduga), watchdog akan mendeteksi bahwa sistem tidak lagi responsif dan memicu reset otomatis agar sistem kembali berjalan normal, alih-alih macet tanpa batas waktu.
 
+![Gambar 3: Diagram alur watchdog timer — program normal "memberi makan" (reset) watchdog secara berkala, dibandingkan dengan program hang yang gagal memberi makan sehingga watchdog memicu reset otomatis](img/diagram_watchdog_timer.png)
+
 ### C.4 Multitasking dengan FreeRTOS
 Arduino-ESP32 core dibangun di atas **FreeRTOS**, sebuah RTOS (Real-Time Operating System) yang memungkinkan beberapa **task** berjalan secara "paralel" (sebenarnya bergantian sangat cepat oleh scheduler, atau benar-benar paralel karena ESP32 memiliki dua core CPU). Setiap task memiliki fungsi, ukuran stack, dan prioritas masing-masing, dibuat menggunakan `xTaskCreate()`/`xTaskCreatePinnedToCore()`. Task yang berjalan pada RTOS umumnya tidak menggunakan `delay()` biasa, melainkan `vTaskDelay()` agar tidak memblokir task lain secara tidak perlu. Komunikasi antar task dapat dilakukan melalui **queue** (`xQueueSend()`/`xQueueReceive()`), memungkinkan satu task mengirim data ke task lain secara aman.
+
+![Gambar 4: Diagram dua task FreeRTOS berjalan pada Core 0 dan Core 1 ESP32, saling berkomunikasi melalui queue](img/diagram_freertos_dualcore.png)
 
 ---
 
@@ -558,7 +567,26 @@ Rancang sistem yang menggabungkan seluruh topik modul ini dalam satu program: di
 
 ---
 
-## F. Referensi
+## F. Tugas Pasca Praktikum (Simulasi Wokwi)
+
+[Wokwi](https://wokwi.com) menjalankan firmware ESP32 sungguhan di atas simulator berbasis QEMU, sehingga interrupt, timer hardware, watchdog, dan FreeRTOS **benar-benar berjalan** (bukan disimulasikan secara logis saja) — cocok untuk menguji ulang skenario-skenario modul ini tanpa hardware fisik. Kerjakan tugas berikut **setelah** kegiatan praktikum selesai.
+
+> **Catatan:** Part **motor DC + encoder quadrature** kemungkinan tidak tersedia di Wokwi sebagai satu kesatuan modul JGB37-520. Sebagai gantinya, gunakan **dua pushbutton virtual** untuk mensimulasikan sinyal Channel A dan Channel B secara manual (ditekan bergantian), atau bangkitkan pulsa quadrature via kode timer sebagai sumber sinyal buatan.
+
+**Tugas 1 — Reproduksi Manual Recovery (Wokwi):**
+1. Buat project Wokwi baru dengan board **ESP32**, rangkai pushbutton darurat (Percobaan 1) dan LED indikator
+2. Implementasikan ulang skenario program hang (`while(true){}` tanpa `yield`) beserta ISR tombol darurat yang memanggil `esp_restart()`
+3. Verifikasi pada Serial Monitor Wokwi bahwa sistem benar-benar restart (tampil ulang pesan boot) setelah tombol darurat ditekan, meskipun `loop()` sedang hang
+4. Bandingkan dengan pendekatan **watchdog timer** (Percobaan 4) pada skenario hang yang sama — mana yang lebih cepat memulihkan sistem, dan apa trade-off masing-masing (kontrol manual vs otomatis)?
+
+**Tugas 2 — Timer Interrupt + Queue (Wokwi):**
+Gabungkan timer interrupt (Percobaan 3, logging status tiap 1 detik) dengan multitasking FreeRTOS (Percobaan 5) dalam satu project Wokwi: satu task membaca status sebuah pushbutton virtual dan mengirim jumlah penekanan ke queue, sementara timer interrupt terpisah men-trigger flag yang dibaca task lain untuk mencetak status queue setiap detik ke Serial Monitor.
+
+**Pengumpulan:** Sertakan link project Wokwi (mode *share*, pastikan visibility public/unlisted) beserta laporan singkat pada berkas terpisah.
+
+---
+
+## G. Referensi
 1. Espressif Systems, *ESP32 Technical Reference Manual — Interrupt, Timer, Task Watchdog*
 2. Espressif Systems, *ESP-IDF Programming Guide — FreeRTOS, Task Watchdog Timer*, https://docs.espressif.com/projects/esp-idf/
 3. Arduino-ESP32 Core Documentation — Timer, https://docs.espressif.com/projects/arduino-esp32/

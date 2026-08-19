@@ -22,10 +22,11 @@
 - [E. Kegiatan Praktikum](#e-kegiatan-praktikum)
   - [PERCOBAAN 1 — Instalasi PlatformIO & Pengenalan STM32 Blackpill (Blink)](#percobaan-1--instalasi-platformio--pengenalan-stm32-blackpill-blink)
   - [PERCOBAAN 2 — Pengenalan ESP32 dengan Framework ESP-IDF (Blink)](#percobaan-2--pengenalan-esp32-dengan-framework-esp-idf-blink)
-  - [PERCOBAAN 3 — Pull-up dan Pull-down: Eksternal vs Internal (2 Button, 2 Kode Program) (ESP32 + Framework Arduino)](#percobaan-3--pull-up-dan-pull-down-eksternal-vs-internal-2-button-2-kode-program-esp32--framework-arduino)
+  - [PERCOBAAN 3 — Pull-up dan Pull-down: Eksternal vs Internal (ESP32 + Framework Arduino)](#percobaan-3--pull-up-dan-pull-down-eksternal-vs-internal-esp32--framework-arduino)
   - [PERCOBAAN 4 — Debouncing pada Input Tombol GPIO (ESP32 + Framework Arduino)](#percobaan-4--debouncing-pada-input-tombol-gpio-esp32--framework-arduino)
   - [PERCOBAAN 5 — Level Shifter: Pengukuran Tegangan Input dan Output (ESP32 + Framework Arduino)](#percobaan-5--level-shifter-pengukuran-tegangan-input-dan-output-esp32--framework-arduino)
-- [F. Referensi](#f-referensi)
+- [F. Tugas Pasca Praktikum (Simulasi Wokwi)](#f-tugas-pasca-praktikum-simulasi-wokwi)
+- [G. Referensi](#g-referensi)
 
 ---
 
@@ -85,8 +86,12 @@ STM32 dapat diprogram menggunakan **framework Arduino** (dikenal sebagai **STM32
 
 Salah satu ciri khas STM32duino adalah dukungan penamaan pin langsung sesuai label port fisik pada board, misalnya `PC13` atau `PA0`, alih-alih hanya nomor pin generik seperti pada board Arduino biasa.
 
+![Gambar 1: Pinout board STM32 Blackpill F411CE/F401CC, menunjukkan label PA/PB/PC, LED onboard PC13, dan tombol user PA0](img/pinout_stm32_blackpill.png)
+
 ### C.3 ESP32 dan Framework ESP-IDF
 ESP32 adalah mikrokontroler 32-bit dual-core (Xtensa LX6) dengan WiFi dan Bluetooth terintegrasi, serta dilengkapi USB-to-Serial bawaan sehingga dapat langsung diprogram melalui kabel USB tanpa programmer eksternal.
+
+![Gambar 2: Pinout board ESP32 DevKit v1, menunjukkan nomor GPIO, pin power (3V3/5V/GND), dan LED onboard](img/pinout_esp32_devkit.png)
 
 **ESP-IDF (Espressif IoT Development Framework)** adalah framework resmi dan native dari Espressif, dibangun di atas FreeRTOS. Berbeda dengan framework Arduino yang menyederhanakan program menjadi `setup()` dan `loop()`, ESP-IDF menggunakan struktur berbasis **task/component** dengan titik masuk program berupa fungsi `app_main()`. ESP-IDF memberi akses lebih penuh ke fitur ESP32 (mis. konfigurasi low-level WiFi, task scheduling FreeRTOS secara langsung) dan umum digunakan pada pengembangan produk IoT tingkat lanjut.
 
@@ -104,8 +109,12 @@ Saat sebuah tombol/pushbutton tidak ditekan dan kedua kakinya tidak terhubung ke
 
 Resistor pull-up/pull-down di atas dapat dipasang secara **eksternal** (komponen resistor fisik pada breadboard), maupun diaktifkan secara **internal** melalui firmware tanpa resistor tambahan. ESP32 menyediakan keduanya pada framework Arduino: `pinMode(pin, INPUT_PULLUP)` untuk pull-up internal, dan `pinMode(pin, INPUT_PULLDOWN)` untuk pull-down internal. Perlu diperhatikan bahwa **tidak semua pin GPIO ESP32 mendukung resistor pull internal** — pin input-only (GPIO 34–39) sama sekali tidak memiliki resistor pull-up/pull-down internal, sehingga wajib menggunakan resistor eksternal jika digunakan sebagai input tombol.
 
+![Gambar 3: Diagram skematik rangkaian pull-up resistor (GPIO ke VCC via resistor, tombol ke GND) berdampingan dengan pull-down resistor (GPIO ke GND via resistor, tombol ke VCC)](img/skematik_pullup_pulldown.png)
+
 ### C.5 Debouncing
 Kontak mekanik pada tombol/saklar menghasilkan beberapa transisi sinyal HIGH-LOW dalam waktu sangat singkat akibat getaran fisik saat kontak bersentuhan/terlepas ("bouncing"). Tanpa penanganan, satu kali aksi tekan dapat terbaca sebagai beberapa kali event. **Debouncing** memastikan hanya satu transisi valid yang terdeteksi, dengan menunggu sinyal stabil selama periode waktu tertentu (mis. 20–50ms) sebelum event dianggap sah.
+
+![Gambar 4: Grafik sinyal tombol pada osiloskop/logic analyzer yang memperlihatkan bouncing (transisi HIGH-LOW berulang saat kontak menyentuh/lepas), dibandingkan dengan sinyal yang sudah didebounce](img/grafik_bouncing_debounce.png)
 
 ### C.6 Level Shifter (Konverter Level Tegangan Logika)
 ESP32 dan STM32 beroperasi pada level logika **3.3V**, sedangkan cukup banyak modul/sensor lain (terutama modul lawas) beroperasi pada level logika **5V**. Menghubungkan langsung output 5V ke pin GPIO 3.3V berisiko merusak mikrokontroler, karena sebagian besar pin GPIO ESP32/STM32 tidak toleran terhadap tegangan di atas ±3.3–3.6V.
@@ -115,6 +124,8 @@ ESP32 dan STM32 beroperasi pada level logika **3.3V**, sedangkan cukup banyak mo
 - **Bidirectional (dua arah):** dapat mengonversi sinyal pada kedua arah secara otomatis tergantung arah aliran data — umum digunakan pada jalur komunikasi dua arah seperti I2C, biasanya berbasis MOSFET (mis. BSS138 pada modul "4-channel logic level converter")
 
 Modul level shifter bidirectional pada umumnya memiliki dua sisi: **LV (Low Voltage)** dan **HV (High Voltage)**, masing-masing dengan pin VCC dan GND tersendiri, serta beberapa pasang channel sinyal (LV1↔HV1, LV2↔HV2, dst.) yang saling terhubung secara internal.
+
+![Gambar 5: Modul level shifter bidirectional 4-channel (mis. berbasis BSS138), menunjukkan label sisi LV dan HV beserta pasangan channelnya](img/modul_level_shifter.png)
 
 ---
 
@@ -150,10 +161,7 @@ Mahasiswa mampu melakukan instalasi PlatformIO, memahami arsitektur board Blackp
    debug_tool = stlink
    ```
 4. Sambungkan ST-Link ke Blackpill (SWDIO, SWCLK, GND, 3.3V), lalu ST-Link ke PC via USB
-5. Tulis kode Blink berikut pada `src/main.cpp` (perhatikan: framework Arduino menggunakan ekstensi `.cpp`, bukan `.c` seperti HAL)
-6. **Build**, lalu **Upload** — amati proses flashing pada terminal PlatformIO
-7. Amati LED onboard (PC13) berkedip setiap 500ms
-8. Diskusi: pinout board Blackpill (GPIO, power, BOOT0, LED onboard, tombol user PA0)
+5. Tulis kode Blink berikut pada `src/main.cpp` (perhatikan: framework Arduino menggunakan ekstensi `.cpp`)
 
 **Kode Program (Blink STM32 Arduino):**
 ```cpp
@@ -175,6 +183,10 @@ void loop()
 }
 ```
 
+6. **Build**, lalu **Upload** — amati proses flashing pada terminal PlatformIO
+7. Amati LED onboard (PC13) berkedip setiap 500ms
+
+
 **Penjelasan Kode:**
 | Baris | Penjelasan |
 |---|---|
@@ -185,8 +197,7 @@ void loop()
 
 **Analisis Setelah Program Berjalan:**
 1. Amati kecepatan kedip LED onboard — pastikan sesuai ekspektasi (nyala 500ms, mati 500ms, sehingga berkedip 1 kali per detik)
-2. Catat pesan yang muncul di terminal PlatformIO saat proses upload selesai (mis. `SUCCESS`), sebagai bukti verifikasi bahwa flashing berhasil
-3. Ubah nilai `delay(500)` menjadi `delay(100)`, **Build & Upload** ulang, lalu amati apakah kecepatan kedip LED berubah sesuai ekspektasi
+2. Ubah nilai `delay(500)` menjadi `delay(100)`, **Build & Upload** ulang, lalu amati apakah kecepatan kedip LED berubah sesuai ekspektasi
 
 ---
 
@@ -207,10 +218,9 @@ Mahasiswa mampu memahami arsitektur ESP32 dan struktur program berbasis ESP-IDF,
    board = esp32dev
    framework = espidf
    ```
-3. Amati struktur project ESP-IDF (`src/main.c`, fungsi `app_main()`) — bandingkan dengan struktur project Arduino pada Percobaan 1
-4. Sambungkan ESP32 ke PC via USB, pastikan port terdeteksi
-5. Tulis kode Blink berikut pada `src/main.c`
-6. **Build** dan **Upload**, amati LED (GPIO 2, onboard pada sebagian besar board ESP32 DevKit) berkedip setiap 500ms
+
+3. Sambungkan ESP32 ke PC via USB, pastikan port terdeteksi
+4. Tulis kode Blink berikut pada `src/main.c`
 
 **Kode Program (Blink ESP32 ESP-IDF):**
 ```c
@@ -234,6 +244,7 @@ void app_main(void)
   }
 }
 ```
+5. **Build** dan **Upload**, amati LED pada board ESP32 DevKit berkedip setiap 500ms
 
 **Penjelasan Kode:**
 | Baris | Penjelasan |
@@ -245,12 +256,11 @@ void app_main(void)
 
 **Analisis Setelah Program Berjalan:**
 1. Amati kecepatan kedip LED, bandingkan dengan hasil Percobaan 1 — seharusnya sama-sama 1 kali kedip per detik meskipun frameworknya berbeda
-2. Catat dan bandingkan **waktu proses build** antara project ESP-IDF ini dengan project Arduino pada Percobaan 1 — umumnya ESP-IDF membutuhkan waktu lebih lama karena mengompilasi lebih banyak komponen (FreeRTOS, driver, dsb.)
-3. Uji dengan menghapus salah satu baris `vTaskDelay()` pada `loop()`, amati perubahan perilaku LED setelah di-upload ulang
+2. Uji dengan menghapus salah satu baris `vTaskDelay()` pada `loop()`, amati perubahan perilaku LED setelah di-upload ulang
 
 ---
 
-### PERCOBAAN 3 — Pull-up dan Pull-down: Eksternal vs Internal (2 Button, 2 Kode Program) (ESP32 + Framework Arduino)
+### PERCOBAAN 3 — Pull-up dan Pull-down: Eksternal vs Internal (ESP32 + Framework Arduino)
 
 **Tujuan:**
 Mahasiswa mampu memahami, mengimplementasikan, dan membandingkan pembacaan tombol menggunakan resistor pull-up/pull-down yang dipasang secara **eksternal** maupun diaktifkan secara **internal** pada ESP32 dengan framework Arduino, menggunakan 2 pushbutton yang sama untuk kedua kondisi.
@@ -515,7 +525,26 @@ Implementasikan sistem penghitung akses sederhana menggunakan tombol dengan konf
 
 ---
 
-## F. Referensi
+## F. Tugas Pasca Praktikum (Simulasi Wokwi)
+
+[Wokwi](https://wokwi.com) adalah simulator elektronik berbasis browser yang mendukung ESP32 secara native (termasuk Serial Monitor, virtual Logic Analyzer, dan simulasi *contact bouncing* pada pushbutton), sehingga cocok digunakan untuk eksplorasi mandiri di luar jam praktikum tanpa perlu hardware fisik. Kerjakan tugas berikut **setelah** kegiatan praktikum selesai.
+
+> **Catatan:** Wokwi belum mendukung board STM32 Blackpill secara native, sehingga tugas ini difokuskan pada bagian ESP32 (Percobaan 3–4). Jika ingin bereksperimen dengan STM32, gunakan board Nucleo yang tersedia di Wokwi sebagai gantinya (opsional, tidak wajib).
+
+**Tugas 1 — Gabungan Pull-up/Pull-down & Debouncing:**
+1. Buat project Wokwi baru dengan board **ESP32**, lalu rangkai **dua pushbutton virtual**: satu dikonfigurasi pull-up (eksternal atau internal, bebas dipilih) dan satu lagi pull-down
+2. Gabungkan logika debouncing (Percobaan 4) pada **kedua** tombol tersebut, lalu implementasikan sistem penghitung akses masuk/keluar (tombol 1 = masuk, tombol 2 = keluar), dengan total pengunjung ditampilkan pada Serial Monitor
+3. Tambahkan komponen **Logic Analyzer** dari Wokwi pada salah satu pin tombol untuk merekam bentuk sinyal mentah (dengan bouncing) — Wokwi secara default mensimulasikan efek bouncing kontak mekanik pada pushbutton virtual
+4. Ambil screenshot rangkaian dan hasil rekaman Logic Analyzer, lalu jelaskan pada laporan bagaimana pola bouncing yang teramati dibandingkan dengan hasil pengamatan pada Percobaan 4 (hardware asli)
+
+**Tugas 2 — Eksplorasi Mandiri:**
+Modifikasi Tugas 1 agar total pengunjung tidak dapat bernilai negatif (mis. tombol "keluar" ditolak jika total sudah 0), dan tambahkan LED indikator yang menyala saat ruangan penuh (mis. total ≥ 5).
+
+**Pengumpulan:** Sertakan link project Wokwi (mode *share*, pastikan visibility public/unlisted) beserta laporan singkat pada berkas terpisah.
+
+---
+
+## G. Referensi
 1. STMicroelectronics, *STM32F4 Reference Manual (RM0383/RM0368)*
 2. STMicroelectronics, *UM1724 — ST-Link/V2 User Manual*
 3. STM32duino, *Arduino Core for STM32 — Documentation*, https://github.com/stm32duino/Arduino_Core_STM32

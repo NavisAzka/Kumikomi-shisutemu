@@ -26,7 +26,8 @@
   - [PERCOBAAN 3 — Filtering dengan Kalman Filter](#percobaan-3--filtering-dengan-kalman-filter)
   - [PERCOBAAN 4 — Kontrol Closed-Loop: On-Off vs Proportional (P)](#percobaan-4--kontrol-closed-loop-on-off-vs-proportional-p)
   - [PERCOBAAN 5 — Kontrol PID Lengkap & Tuning](#percobaan-5--kontrol-pid-lengkap--tuning)
-- [F. Referensi](#f-referensi)
+- [F. Tugas Pasca Praktikum (Simulasi Wokwi)](#f-tugas-pasca-praktikum-simulasi-wokwi)
+- [G. Referensi](#g-referensi)
 
 ---
 
@@ -73,6 +74,8 @@ RPM = (ΔPulsa / ΔT) × (60 / CPR_TOTAL)
 
 di mana `ΔPulsa` adalah jumlah pulsa yang terhitung selama interval `ΔT` (dalam detik). Karena nilai CPR dan rasio gearbox tidak selalu tercantum akurat pada datasheet/penjual, **kalibrasi langsung** (memutar poros output sejumlah putaran penuh yang diketahui, lalu mencatat total pulsa yang terhitung) umumnya menghasilkan nilai `CPR_TOTAL` yang lebih akurat.
 
+![Gambar 1: Diagram sinyal quadrature encoder Channel A dan Channel B beserta pulsa yang terhitung per putaran poros](img/diagram_quadrature_encoder.png)
+
 ### C.2 Filtering Sederhana — Low-Pass Filter Alpha
 Hasil pengukuran RPM dari encoder secara mentah cenderung **berisik (noisy)** — nilainya dapat melonjak-lonjak antar sampel akibat variasi singkat pada interval antar pulsa, terutama pada kecepatan rendah atau saat beban motor berubah. Metode filtering paling sederhana adalah **low-pass filter orde-1 (exponential filter)**, dengan persamaan diskret:
 
@@ -81,6 +84,8 @@ y[n] = α·y[n-1] + (1-α)·x[n]
 ```
 
 di mana `y[n]` adalah nilai hasil filter, `x[n]` nilai mentah saat ini, dan `α` (0–1) menentukan seberapa besar pengaruh nilai sebelumnya — semakin besar `α`, sinyal semakin halus namun semakin lambat merespons perubahan (lag lebih besar). Filter ini hanya memiliki **satu parameter** (`α`) yang perlu ditentukan, sehingga sangat mudah diimplementasikan, namun nilainya bersifat tetap (tidak menyesuaikan diri terhadap kondisi sinyal).
+
+![Gambar 2: Grafik perbandingan sinyal RPM mentah (noisy) vs hasil filter alpha pada beberapa nilai α berbeda, menunjukkan trade-off kehalusan vs lag](img/grafik_filter_alpha.png)
 
 ### C.3 Filtering Lanjut — Kalman Filter
 **Kalman filter** adalah metode estimasi rekursif yang menggabungkan **prediksi** (berdasarkan model sistem) dengan **pengukuran baru**, masing-masing diberi bobot sesuai tingkat kepercayaan (ketidakpastian) terhadapnya. Berbeda dengan low-pass filter alpha yang bobotnya tetap, Kalman filter menghitung ulang bobot optimalnya (**Kalman gain**, `K`) pada setiap sampel, berdasarkan dua parameter:
@@ -99,6 +104,8 @@ P = (1 - K) × P
 ```
 di mana `X` adalah estimasi nilai saat ini dan `P` adalah estimasi ketidakpastian (error covariance). Karena `K` dihitung ulang tiap siklus berdasarkan rasio `P` terhadap `R`, Kalman filter secara otomatis lebih "percaya" pada pengukuran saat estimasi belum yakin, dan lebih "percaya" pada model saat estimasi sudah stabil — perilaku adaptif yang tidak dimiliki filter alpha dengan bobot tetap.
 
+![Gambar 3: Diagram blok siklus predict-update Kalman filter, beserta grafik perbandingan hasil Kalman filter vs filter alpha pada sinyal RPM yang sama](img/diagram_kalman_filter.png)
+
 ### C.4 Sistem Kontrol Closed-Loop
 Sistem kontrol closed-loop (loop tertutup) membandingkan nilai yang diinginkan (**setpoint**) dengan nilai terukur sebenarnya (**feedback**), menghasilkan **error** yang digunakan untuk menentukan aksi kontrol berikutnya:
 
@@ -109,6 +116,8 @@ error = setpoint - nilai_terukur
 Dua pendekatan dasar:
 - **Kontrol On-Off (bang-bang):** aktuator diberi output penuh jika nilai terukur di bawah setpoint, dan dimatikan total jika sudah mencapai/melebihi setpoint. Sederhana, namun menghasilkan osilasi di sekitar setpoint (tidak pernah benar-benar stabil)
 - **Kontrol Proportional (P):** output aktuator sebanding dengan besar error (`output = Kp × error`) — semakin besar error, semakin besar aksi koreksi. Lebih halus dari on-off, namun umumnya masih menyisakan **steady-state error** (nilai akhir tidak pernah persis mencapai setpoint)
+
+![Gambar 4: Diagram blok sistem kontrol closed-loop (setpoint → kontroler → aktuator → plant → sensor → feedback ke pembanding), beserta grafik respons on-off (osilasi) vs P (steady-state error)](img/diagram_closed_loop.png)
 
 ### C.5 Kontrol PID
 PID (Proportional-Integral-Derivative) menyempurnakan kontrol P dengan menambahkan dua komponen lain:
@@ -125,6 +134,8 @@ Beberapa pertimbangan praktis dalam implementasi PID pada sistem nyata:
 - **Integral windup:** akumulasi error pada komponen integral perlu dibatasi (*clamping*) agar tidak membesar tanpa batas saat sistem tidak dapat mengejar setpoint dalam waktu lama
 - **PWM minimum:** motor DC seringkali membutuhkan PWM minimum tertentu agar benar-benar mulai berputar (mengatasi gesekan/deadzone) — output PID yang terlalu kecil namun bukan nol perlu dinaikkan ke ambang minimum ini
 - **Tuning:** nilai Kp, Ki, Kd yang tepat umumnya dicari melalui trial-and-error terarah (amati respons, sesuaikan satu parameter setiap kali), atau metode yang lebih sistematis seperti **Ziegler-Nichols**
+
+![Gambar 5: Diagram blok kontroler PID (jalur Proportional, Integral, Derivative dijumlahkan menjadi output), beserta grafik respons sistem sebelum dan sesudah tuning](img/diagram_blok_pid.png)
 
 ---
 
@@ -956,7 +967,26 @@ Lakukan proses tuning PID secara sistematis: catat respons sistem (overshoot, se
 
 ---
 
-## F. Referensi
+## F. Tugas Pasca Praktikum (Simulasi Wokwi)
+
+Motor DC + encoder quadrature JGB37-520 yang digunakan pada modul ini kemungkinan **tidak tersedia** sebagai part siap pakai di [Wokwi](https://wokwi.com), sehingga closed-loop nyata (motor fisik sebagai *plant*) tidak dapat direproduksi langsung. Sebagai gantinya, tugas berikut menggunakan pendekatan **simulasi software**: motor digantikan oleh model matematis sederhana (*plant* orde-1) yang dihitung di dalam kode itu sendiri — pendekatan umum yang dipakai untuk menguji algoritma kontrol sebelum diuji ke hardware asli. Kerjakan tugas berikut **setelah** kegiatan praktikum selesai.
+
+> **Tips:** Ekstensi Wokwi untuk VSCode dapat meneruskan output Serial simulasi ke Serial Monitor/Serial Plotter VSCode yang sama seperti digunakan pada hardware asli (lihat Bagian D), sehingga visualisasi grafik tetap dapat dilakukan dengan cara yang sudah dikenal.
+
+**Tugas 1 — Filtering pada Sinyal Sintetis (Wokwi):**
+1. Buat project Wokwi baru dengan board **ESP32**, rangkai satu **potensiometer** sebagai baseline sinyal
+2. Pada kode, tambahkan **noise buatan** ke nilai potensiometer setiap sampling (mis. `noisyValue = baseValue + random(-50, 50)`), mensimulasikan sinyal RPM mentah yang berisik seperti pada Percobaan 1
+3. Terapkan **filter alpha** (Percobaan 2) dan **Kalman filter** (Percobaan 3) pada sinyal sintetis yang sama, kirim ketiga nilai (mentah, alpha, Kalman) ke Serial Plotter secara bersamaan
+4. Bandingkan hasil kedua filter pada sinyal buatan ini dengan hasil pada Percobaan 1–3 (hardware asli) — apakah kesimpulan mengenai trade-off kehalusan vs lag tetap konsisten?
+
+**Tugas 2 — PID terhadap Plant Simulasi (Wokwi):**
+Ganti sumber RPM dengan **model plant orde-1 dalam kode** (mis. `simulatedRPM += (pwmOutput - simulatedRPM) * dt / tau`, dengan `tau` sebagai konstanta waktu motor buatan), lalu jalankan kontroler PID (Percobaan 5) terhadap plant simulasi tersebut alih-alih motor fisik. Uji beberapa kombinasi Kp/Ki/Kd pada plant simulasi ini terlebih dahulu sebagai *starting point* sebelum tuning ulang pada motor fisik — diskusikan apakah parameter yang baik pada simulasi juga baik pada hardware asli, dan mengapa bisa berbeda (mismatch antara model sederhana dengan motor nyata).
+
+**Pengumpulan:** Sertakan link project Wokwi (mode *share*, pastikan visibility public/unlisted) beserta laporan singkat pada berkas terpisah.
+
+---
+
+## G. Referensi
 1. sss2022, *Closed-Loop Speed Control of a DC Motor With Encoder Using a Discrete PI Controller on Arduino*, Instructables — rujukan formula RPM, filter, dan struktur kontrol PI, https://www.instructables.com/Closed-Loop-Speed-Control-of-a-DC-Motor-With-Encod/
 2. Greg Welch & Gary Bishop, *An Introduction to the Kalman Filter*, University of North Carolina at Chapel Hill — referensi dasar teori Kalman filter
 3. Espressif Systems, *ESP32 Arduino Core Documentation — LEDC*, https://docs.espressif.com/projects/arduino-esp32/

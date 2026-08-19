@@ -1,0 +1,84 @@
+DAFTAR GAMBAR YANG PERLU DISIAPKAN
+===================================
+
+Simpan seluruh file gambar di folder ini (img/) menggunakan nama file pada kolom "Nama File".
+Dokumen .md sudah mereferensikan gambar-gambar ini langsung lewat syntax:
+    ![deskripsi](img/nama_file.png)
+sehingga begitu file gambar dengan nama yang sesuai diletakkan di sini, gambar akan otomatis muncul.
+
+Total: 47 gambar (20 dari setup_vscode_platformio.md + 27 dari Modul 1-5)
+
+-----------------------------------------------------------------------------
+setup_vscode_platformio.md
+-----------------------------------------------------------------------------
+No | Nama File                          | Deskripsi
+01 | download_vscode.png                | Tampilan halaman download di code.visualstudio.com
+02 | instalasi_lisensi_lokasi.png       | Halaman lisensi dan lokasi instalasi
+03 | instalasi_additional_tasks.png     | Halaman Select Additional Tasks
+04 | vscode_welcome.png                 | Tampilan awal VSCode setelah instalasi (halaman Welcome)
+05 | vscode_extensions_icon.png         | Lokasi ikon Extensions pada sidebar kiri VSCode
+06 | pencarian_platformio_ide.png       | Hasil pencarian "PlatformIO IDE" di Extensions Marketplace
+07 | progress_instalasi_platformio.png  | Progress bar instalasi PlatformIO Core di bagian bawah VSCode
+08 | ikon_platformio_sidebar.png        | Ikon PlatformIO pada sidebar kiri VSCode setelah instalasi berhasil
+09 | platformio_home.png                | Tampilan PlatformIO Home - menu New Project, Import Project, Projects, Boards, dsb.
+10 | tombol_new_project.png             | Tombol "+ New Project" pada PlatformIO Home
+11 | form_new_project.png               | Form New Project dengan contoh pengisian Name, Board, dan Framework
+12 | progress_new_project.png           | Progress pembuatan project baru
+13 | struktur_folder_project.png        | Panel Explorer VSCode menampilkan struktur folder project
+14 | status_bar_vscode.png              | Status bar VSCode dengan panah penunjuk ke masing-masing ikon
+15 | download_stlink_driver.png         | Halaman download STSW-LINK009 di situs ST
+16 | chip_cp2102_ch340.png              | Contoh penanda chip CP2102/CH340 pada board ESP32
+17 | installer_driver_cp2102.png        | Contoh tampilan installer driver CP2102/CH340
+18 | proses_upload_terminal.png         | Proses upload berjalan di terminal bawah VSCode
+19 | pesan_success_upload.png           | Pesan SUCCESS setelah proses upload selesai
+20 | serial_monitor_output.png          | Tampilan Serial Monitor menampilkan output program
+
+-----------------------------------------------------------------------------
+Modul_1_Pengantar_Mikrokontroler.md
+-----------------------------------------------------------------------------
+No | Nama File                       | Deskripsi
+01 | pinout_stm32_blackpill.png      | Pinout board STM32 Blackpill F411CE/F401CC (label PA/PB/PC, LED PC13, tombol PA0)
+02 | pinout_esp32_devkit.png         | Pinout board ESP32 DevKit v1 (nomor GPIO, pin power, LED onboard)
+03 | skematik_pullup_pulldown.png    | Diagram skematik rangkaian pull-up resistor vs pull-down resistor
+04 | grafik_bouncing_debounce.png    | Grafik sinyal tombol (bouncing) pada osiloskop, sebelum vs sesudah debouncing
+05 | modul_level_shifter.png         | Modul level shifter bidirectional 4-channel (label sisi LV dan HV)
+
+-----------------------------------------------------------------------------
+Modul_2_Sensor_dan_Aktuator.md
+-----------------------------------------------------------------------------
+No | Nama File                       | Deskripsi
+01 | modul_ldr_pembagi_tegangan.png  | Foto/diagram modul LDR beserta rangkaian pembagi tegangan pada breadboard
+02 | modul_touch_ttp223.png          | Foto modul touch sensor TTP223 (label pin VCC/GND/OUT)
+03 | modul_hall_effect.png           | Foto modul hall effect sensor (mis. A3144/KY-003) beserta magnet uji
+04 | sensor_ultrasonik_ir.png        | Foto modul sensor ultrasonik HC-SR04 (Trig/Echo) berdampingan dengan sensor IR obstacle
+05 | grafik_pwm_duty_cycle.png       | Grafik sinyal PWM pada beberapa duty cycle berbeda (25%, 50%, 75%)
+06 | diagram_pulsa_servo.png         | Diagram lebar pulsa sinyal servo (1ms-2ms dalam periode 20ms) beserta sudut yang dihasilkan
+07 | wiring_motor_stepper.png        | Diagram wiring motor stepper NEMA17 ke driver A4988/DRV8825
+
+-----------------------------------------------------------------------------
+Modul_3_Komunikasi_Serial.md
+-----------------------------------------------------------------------------
+No | Nama File                       | Deskripsi
+01 | wiring_uart_silang.png          | Diagram wiring UART silang antar dua board (TX-RX silang, GND bersama)
+02 | diagram_bus_i2c.png             | Diagram bus I2C dengan satu master dan beberapa slave berbagi SDA/SCL
+03 | wiring_spi_master_slave.png     | Diagram wiring SPI master-slave (MOSI-MOSI, MISO-MISO, SCK-SCK, CS-CS)
+04 | diagram_blocking_vs_dma.png     | Diagram blok perbandingan transfer data blocking vs DMA
+
+-----------------------------------------------------------------------------
+Modul_4_Interrupt_Timer_Watchdog_Multitasking.md
+-----------------------------------------------------------------------------
+No | Nama File                       | Deskripsi
+01 | diagram_alur_isr.png            | Diagram alur eksekusi program utama dijeda oleh ISR saat interrupt terjadi
+02 | timeline_delay_vs_timer.png     | Timeline perbandingan task periodik via delay() (blocking) vs timer interrupt (non-blocking)
+03 | diagram_watchdog_timer.png      | Diagram alur watchdog timer (program normal vs program hang yang memicu reset)
+04 | diagram_freertos_dualcore.png   | Diagram dua task FreeRTOS berjalan pada Core 0 dan Core 1 ESP32, berkomunikasi via queue
+
+-----------------------------------------------------------------------------
+Modul_5_Filtering_dan_PID.md
+-----------------------------------------------------------------------------
+No | Nama File                       | Deskripsi
+01 | diagram_quadrature_encoder.png  | Diagram sinyal quadrature encoder Channel A dan Channel B beserta pulsa per putaran
+02 | grafik_filter_alpha.png         | Grafik sinyal RPM mentah (noisy) vs hasil filter alpha pada beberapa nilai alpha
+03 | diagram_kalman_filter.png       | Diagram blok siklus predict-update Kalman filter, beserta perbandingan dengan filter alpha
+04 | diagram_closed_loop.png         | Diagram blok sistem kontrol closed-loop, beserta grafik respons on-off vs P
+05 | diagram_blok_pid.png            | Diagram blok kontroler PID beserta grafik respons sistem sebelum/sesudah tuning

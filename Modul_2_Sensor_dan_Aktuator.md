@@ -29,7 +29,8 @@
   - [PERCOBAAN 3 — Aktuator Motor DC](#percobaan-3--aktuator-motor-dc)
   - [PERCOBAAN 4 — Aktuator Motor Stepper](#percobaan-4--aktuator-motor-stepper)
   - [PERCOBAAN 5 — Aktuator Motor Servo](#percobaan-5--aktuator-motor-servo)
-- [F. Referensi](#f-referensi)
+- [F. Tugas Pasca Praktikum (Simulasi Wokwi)](#f-tugas-pasca-praktikum-simulasi-wokwi)
+- [G. Referensi](#g-referensi)
 
 ---
 
@@ -84,23 +85,35 @@ Sensor resistif (LDR, thermistor, potensiometer) bekerja dengan mengubah nilai r
                           ke ADC
 ```
 
+![Gambar 1: Foto/diagram modul LDR beserta rangkaian pembagi tegangan pada breadboard](img/modul_ldr_pembagi_tegangan.png)
+
 ### C.3 Sensor Kapasitif
 Sensor kapasitif mendeteksi besaran fisik (sentuhan, kelembapan, jarak dekat) melalui **perubahan nilai kapasitansi**. Pada praktikum ini digunakan modul **touch sensor TTP223** — modul berbasis IC TTP223 yang sudah mengintegrasikan rangkaian deteksi kapasitansi dan pembanding ambang batas (threshold) secara internal, sehingga cukup menghasilkan **output digital HIGH/LOW** siap pakai (umumnya aktif HIGH saat pad disentuh) tanpa perlu kalibrasi nilai analog secara manual — berbeda dengan fitur *touch* bawaan ESP32 (`touchRead()`) yang mengembalikan nilai mentah dan memerlukan penentuan threshold sendiri. Sensor kapasitif lain (mis. capacitive soil moisture, capacitive proximity) bekerja dengan prinsip serupa — mengukur perubahan kapasitansi pada elektroda sensor — namun umumnya berbentuk modul terpisah dengan output analog.
+
+![Gambar 2: Foto modul touch sensor TTP223 beserta label pin VCC/GND/OUT](img/modul_touch_ttp223.png)
 
 ### C.4 Sensor Induktif
 Sensor induktif mendeteksi objek logam atau perubahan medan magnet melalui **perubahan induktansi/medan magnet**. Pada praktikum ini digunakan **hall effect sensor**, yang mendeteksi keberadaan/kekuatan medan magnet secara langsung — umum digunakan untuk mendeteksi posisi magnet atau kecepatan putar (bersama magnet pada objek berputar). Contoh sensor induktif lain adalah *inductive proximity sensor*, yang menghasilkan medan elektromagnetik osilasi dan mendeteksi benda logam melalui redaman (eddy current) pada medan tersebut.
 
+![Gambar 3: Foto modul hall effect sensor (mis. A3144/KY-003) beserta magnet uji](img/modul_hall_effect.png)
+
 ### C.5 Sensor Basis Lain (Akustik & Optik)
 - **Ultrasonik (akustik):** mengukur jarak berdasarkan waktu tempuh gelombang suara (pulsa dipancarkan, dipantulkan objek, lalu diterima kembali); jarak dihitung dari selisih waktu dan kecepatan suara di udara
 - **Inframerah/optik:** mendeteksi objek berdasarkan pantulan cahaya inframerah; umum digunakan sebagai sensor jarak dekat/obstacle dengan output digital
+
+![Gambar 4: Foto modul sensor ultrasonik HC-SR04 (label pin Trig/Echo) berdampingan dengan modul sensor IR obstacle](img/sensor_ultrasonik_ir.png)
 
 ### C.6 PWM (Pulse Width Modulation) — Kontrol Kecepatan Motor DC
 PWM adalah teknik menghasilkan sinyal digital yang menyerupai sinyal analog dengan mengatur **duty cycle** (persentase waktu sinyal HIGH dalam satu periode). Semakin besar duty cycle, semakin besar "rata-rata" tegangan yang dirasakan oleh beban (mis. motor DC), sehingga kecepatan putarnya meningkat. Pada ESP32 framework Arduino, PWM diakses melalui API **LEDC** berbasis **channel**: `ledcSetup(channel, freq, resolution)` untuk mengonfigurasi sebuah channel PWM (frekuensi & resolusi), `ledcAttachPin(pin, channel)` untuk menghubungkan channel tersebut ke pin fisik, dan `ledcWrite(channel, duty)` untuk mengatur duty cycle-nya berdasarkan nomor channel (bukan nomor pin). Arah putar motor DC diatur secara terpisah melalui driver motor (mis. L298N) menggunakan dua pin digital (IN1/IN2).
 
 > **Catatan versi:** Seluruh contoh kode pada modul ini (dan modul-modul lain dalam rangkaian praktikum) menggunakan **platform PlatformIO resmi `espressif32`** tanpa mengunci versi khusus, yang secara default membawa **Arduino-ESP32 core versi 2.0.x**. API LEDC berbasis channel (`ledcSetup`/`ledcAttachPin`) adalah API yang tersedia pada core versi ini. Core versi 3.x (dengan API LEDC berbasis pin seperti `ledcAttach()`) memerlukan platform komunitas terpisah (mis. fork *pioarduino*) dan **tidak dibahas** pada praktikum ini agar tetap konsisten dan kompatibel dengan library lain (mis. ESP32Servo) yang digunakan di modul-modul ini.
 
+![Gambar 5: Grafik sinyal PWM dengan beberapa nilai duty cycle berbeda (mis. 25%, 50%, 75%), menunjukkan hubungan duty cycle dengan tegangan rata-rata](img/grafik_pwm_duty_cycle.png)
+
 ### C.7 Kontrol Posisi Motor Servo
 Motor servo juga dikendalikan menggunakan sinyal PWM, namun dengan prinsip yang berbeda dari kontrol kecepatan motor DC — pada servo, **lebar pulsa (pulse width)** itu sendiri yang menentukan posisi sudut, bukan rata-rata duty cycle. Umumnya sinyal kontrol servo memiliki periode 20ms (frekuensi 50Hz), dengan lebar pulsa sekitar 1ms merepresentasikan sudut 0° dan 2ms merepresentasikan sudut 180°. Pada framework Arduino, detail ini diabstraksi oleh library seperti **ESP32Servo**, sehingga cukup memanggil fungsi `.write(angle)` untuk menggerakkan servo ke sudut tertentu.
+
+![Gambar 6: Diagram lebar pulsa sinyal servo (1ms–2ms dalam periode 20ms) beserta sudut yang dihasilkan (0°–180°)](img/diagram_pulsa_servo.png)
 
 ### C.8 Motor Stepper
 Berbeda dengan motor DC yang berputar kontinu, motor stepper bergerak dalam **langkah-langkah diskret (step)** sesuai jumlah pulsa yang diberikan — misalnya 1.8° per step pada motor stepper standar (200 step per putaran penuh). Motor stepper dikendalikan melalui **driver motor stepper** (mis. A4988, DRV8825), yang menerima sinyal:
@@ -108,6 +121,8 @@ Berbeda dengan motor DC yang berputar kontinu, motor stepper bergerak dalam **la
 - **DIR:** menentukan arah putaran motor
 - **EN (Enable):** mengaktifkan/menonaktifkan driver — saat dinonaktifkan, motor dapat diputar bebas secara manual
 - **RESET/SLEEP:** beberapa driver memiliki pin ini untuk mereset atau menonaktifkan mode tidur driver, umumnya perlu ditarik HIGH agar driver aktif normal
+
+![Gambar 7: Diagram wiring motor stepper NEMA17 ke driver A4988/DRV8825, beserta pin STEP/DIR/EN/RESET ke ESP32](img/wiring_motor_stepper.png)
 
 ---
 
@@ -542,7 +557,26 @@ Rancang sistem yang menggabungkan minimal satu sensor dari tiap basis pengukuran
 
 ---
 
-## F. Referensi
+## F. Tugas Pasca Praktikum (Simulasi Wokwi)
+
+[Wokwi](https://wokwi.com) menyediakan part siap pakai untuk ESP32 beserta LDR, potensiometer, HC-SR04, servo motor, dan motor DC — cukup lengkap untuk mensimulasikan sebagian besar rangkaian pada modul ini tanpa hardware fisik. Kerjakan tugas berikut **setelah** kegiatan praktikum selesai.
+
+> **Catatan:** Modul touch sensor TTP223 dan hall effect sensor kemungkinan belum tersedia sebagai part bawaan Wokwi. Sebagai gantinya, gunakan **potensiometer** atau **slide switch virtual** untuk mensimulasikan sinyal digital HIGH/LOW pengganti kedua sensor tersebut pada bagian yang membutuhkannya.
+
+**Tugas 1 — Indikator Jarak Otomatis (Wokwi):**
+1. Buat project Wokwi baru dengan board **ESP32**, rangkai sensor **HC-SR04** dan **servo motor**
+2. Implementasikan program yang membaca jarak dari HC-SR04 (Percobaan 2), lalu memetakan (`map()`) nilai jarak tersebut menjadi sudut servo (0°–180°) — semakin dekat objek, semakin besar sudut servo (meniru jarum penunjuk pada meter analog)
+3. Uji dengan menggeser posisi objek virtual di depan sensor HC-SR04 pada simulator, amati apakah pergerakan servo responsif dan sesuai ekspektasi
+4. Sebagai pengembangan, tambahkan LDR yang mengatur kecepatan "kedipan" LED indikator (semakin gelap, semakin cepat berkedip) berjalan bersamaan dengan sistem indikator jarak di atas
+
+**Tugas 2 — Eksplorasi Mandiri:**
+Ganti servo pada Tugas 1 dengan motor DC (via driver, kendalikan menggunakan PWM) sehingga kecepatan putar motor merepresentasikan jarak objek, alih-alih posisi sudut. Bandingkan kelebihan/kekurangan representasi jarak melalui sudut (servo) vs kecepatan (motor DC).
+
+**Pengumpulan:** Sertakan link project Wokwi (mode *share*, pastikan visibility public/unlisted) beserta laporan singkat pada berkas terpisah.
+
+---
+
+## G. Referensi
 1. Espressif Systems, *ESP32 Technical Reference Manual*
 2. Espressif Systems, *ESP32 Arduino Core Documentation — Analog, Touch, LEDC*, https://docs.espressif.com/projects/arduino-esp32/
 3. Datasheet HC-SR04 Ultrasonic Sensor

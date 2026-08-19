@@ -25,7 +25,8 @@
   - [PERCOBAAN 3 — Komunikasi SPI Antar ESP32 (Master-Slave)](#percobaan-3--komunikasi-spi-antar-esp32-master-slave)
   - [PERCOBAAN 4 — Interfacing SPI: IMU MPU6500 (Pembacaan Register SPI Manual)](#percobaan-4--interfacing-spi-imu-mpu6500-pembacaan-register-spi-manual)
   - [PERCOBAAN 5 — DMA: Pembacaan IMU MPU6500 via SPI dengan DMA](#percobaan-5--dma-pembacaan-imu-mpu6500-via-spi-dengan-dma)
-- [F. Referensi](#f-referensi)
+- [F. Tugas Pasca Praktikum (Simulasi Wokwi)](#f-tugas-pasca-praktikum-simulasi-wokwi)
+- [G. Referensi](#g-referensi)
 
 ---
 
@@ -62,6 +63,8 @@ Setelah menyelesaikan Modul 3, praktikan mampu:
 ### C.1 UART (Universal Asynchronous Receiver-Transmitter)
 UART adalah protokol komunikasi serial **asinkron** — tidak menggunakan sinyal clock bersama, sehingga kedua perangkat harus disepakati terlebih dahulu **baud rate**-nya (kecepatan transmisi, mis. 115200 bps) agar dapat saling memahami data. Komunikasi UART menggunakan dua jalur: **TX** (transmit) dan **RX** (receive), dengan aturan pin TX satu perangkat disambungkan ke pin RX perangkat lainnya (silang). ESP32 memiliki beberapa UART hardware; selain UART0 (digunakan untuk Serial Monitor/upload program), tersedia UART1 dan UART2 yang dapat dikonfigurasi bebas pada pin GPIO yang diinginkan menggunakan `HardwareSerial`.
 
+![Gambar 1: Diagram wiring UART silang antar dua board (TX papan A ke RX papan B, RX papan A ke TX papan B, GND bersama)](img/wiring_uart_silang.png)
+
 ### C.2 I2C (Inter-Integrated Circuit)
 I2C adalah protokol komunikasi serial **sinkron** yang hanya membutuhkan dua jalur: **SDA** (Serial Data) dan **SCL** (Serial Clock), memungkinkan banyak perangkat terhubung pada bus yang sama. Setiap perangkat (**slave**) memiliki alamat unik (7-bit), sedangkan satu perangkat bertindak sebagai **master** yang mengatur clock dan menginisiasi komunikasi. Pada ESP32, pin default I2C adalah **SDA = GPIO 21** dan **SCL = GPIO 22**, diakses melalui library `Wire`.
 
@@ -69,13 +72,19 @@ Karena setiap perangkat I2C dibedakan melalui **alamat**, bukan jalur fisik terp
 - **OLED display (SSD1306):** alamat tetap `0x3C`, dikendalikan melalui perintah-perintah yang telah diabstraksi oleh library (mis. Adafruit SSD1306), sehingga praktikan tidak perlu menulis manual setiap byte perintah ke controller display
 - **IMU MPU6050:** alamat default `0x68` (dapat berubah menjadi `0x69` tergantung kondisi pin `AD0`), diakses melalui pembacaan/penulisan register secara langsung (mis. `PWR_MGMT_1` untuk membangunkan sensor, `ACCEL_XOUT_H` untuk data akselerometer) — mirip prinsipnya dengan MPU6500 pada Percobaan 4, hanya berbeda protokol fisik (I2C, bukan SPI)
 
+![Gambar 2: Diagram bus I2C dengan satu master dan beberapa slave (OLED 0x3C, MPU6050 0x68) berbagi jalur SDA/SCL yang sama](img/diagram_bus_i2c.png)
+
 ### C.3 SPI (Serial Peripheral Interface)
 SPI adalah protokol komunikasi serial sinkron **full-duplex** (dapat mengirim dan menerima data secara bersamaan), menggunakan empat jalur: **MOSI** (Master Out Slave In), **MISO** (Master In Slave Out), **SCK** (Serial Clock), dan **CS/SS** (Chip Select). Berbeda dengan I2C yang menggunakan pengalamatan, SPI memilih perangkat tujuan melalui jalur CS terpisah untuk masing-masing slave — sehingga umumnya lebih cepat namun membutuhkan lebih banyak jalur pin dibanding I2C. Banyak sensor presisi tinggi seperti IMU (Inertial Measurement Unit) MPU6500 menyediakan antarmuka SPI, diakses melalui pembacaan/penulisan **register** — setiap register memiliki alamat 8-bit, dengan bit paling signifikan (MSB) menandai operasi baca (`1`) atau tulis (`0`).
 
 Berbeda dengan I2C yang mendukung mode master maupun slave secara native melalui library `Wire`, library `SPI` bawaan Arduino-ESP32 **hanya mendukung mode master**. Untuk menjadikan ESP32 sebagai **SPI slave** (mis. saat dua board ESP32 berkomunikasi langsung via SPI), diperlukan driver `spi_slave` dari ESP-IDF (`driver/spi_slave.h`) yang tetap dapat dipanggil langsung dari sketch Arduino, karena Arduino-ESP32 core dibangun di atas ESP-IDF.
 
+![Gambar 3: Diagram wiring SPI master-slave (MOSI-MOSI, MISO-MISO, SCK-SCK, CS-CS terhubung langsung tanpa disilang)](img/wiring_spi_master_slave.png)
+
 ### C.4 DMA (Direct Memory Access)
 DMA adalah mekanisme perangkat keras yang memungkinkan transfer data antara peripheral dan memori **tanpa melibatkan CPU secara langsung** pada setiap byte data. Tanpa DMA, pembacaan/pengiriman data mengharuskan CPU secara aktif menangani transfer tiap byte (*blocking*), yang menghabiskan waktu eksekusi CPU. Pada ESP32, DMA untuk SPI diaktifkan langsung saat inisialisasi bus SPI (parameter *DMA channel* pada `spi_bus_initialize()`), sehingga transfer data berukuran besar — misalnya membaca beberapa register sekaligus pada IMU dalam satu transaksi — dapat dilakukan hardware secara mandiri, dan CPU hanya perlu menunggu transaksi selesai alih-alih menangani tiap byte secara manual.
+
+![Gambar 4: Diagram blok perbandingan alur transfer data blocking (CPU menangani tiap byte) vs DMA (CPU hanya memicu lalu menunggu, hardware DMA menangani transfer)](img/diagram_blocking_vs_dma.png)
 
 ---
 
@@ -766,7 +775,25 @@ Rancang sistem akuisisi data sederhana yang menggabungkan beberapa topik modul i
 
 ---
 
-## F. Referensi
+## F. Tugas Pasca Praktikum (Simulasi Wokwi)
+
+[Wokwi](https://wokwi.com) mendukung **simulasi multi-board dalam satu project** — dua (atau lebih) ESP32 dapat diletakkan pada satu diagram dan saling terhubung melalui pin virtual, cocok untuk mensimulasikan Percobaan board-to-board (UART, I2C, dan SPI) tanpa hardware fisik ganda. Kerjakan tugas berikut **setelah** kegiatan praktikum selesai.
+
+> **Catatan:** Ketersediaan part **MPU6050/MPU6500** dan **OLED SSD1306** pada Wokwi dapat berubah dari waktu ke waktu — periksa panel "Parts" pada editor Wokwi sebelum memulai. Jika sensor IMU tidak tersedia, ganti dengan **potensiometer** sebagai sumber data pengganti (nilai analog yang dikirim menggantikan pembacaan akselerometer).
+
+**Tugas 1 — UART Dua Board di Wokwi:**
+1. Buat satu project Wokwi dengan **dua board ESP32**, hubungkan TX2-RX2 (silang) dan GND keduanya sesuai skema Percobaan 1
+2. Implementasikan ulang kode Transmitter dan Receiver pada masing-masing board, verifikasi data diterima dengan benar melalui dua jendela Serial Monitor Wokwi (satu per board)
+3. Modifikasi agar data yang dikirim berupa **pembacaan potensiometer virtual** (bukan string statis "Hello ESP32"), sehingga Receiver menampilkan nilai yang berubah-ubah sesuai posisi potensiometer
+
+**Tugas 2 — I2C Multi-Device di Wokwi:**
+Pada project Wokwi terpisah, gabungkan Percobaan 2 Bagian A (I2C master-slave dua board) dengan Bagian B (OLED pada satu bus I2C) — board master membaca potensiometer lalu mengirim nilainya ke board slave melalui I2C, dan board slave menampilkan nilai yang diterima pada OLED SSD1306.
+
+**Pengumpulan:** Sertakan link project Wokwi (mode *share*, pastikan visibility public/unlisted) beserta laporan singkat pada berkas terpisah.
+
+---
+
+## G. Referensi
 1. Espressif Systems, *ESP32 Technical Reference Manual — UART, I2C, SPI*
 2. Espressif Systems, *ESP-IDF Programming Guide — SPI Master Driver*, https://docs.espressif.com/projects/esp-idf/
 3. Arduino-ESP32 Core Documentation — Wire (I2C), SPI, https://docs.espressif.com/projects/arduino-esp32/

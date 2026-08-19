@@ -55,23 +55,20 @@ Sebelum mulai, pastikan laptop/PC kamu memenuhi hal berikut:
    ```
 2. Klik tombol **Download**. Situs akan otomatis mendeteksi sistem operasimu dan menawarkan installer yang sesuai.
 
-   *[Gambar 1: Tampilan halaman download di code.visualstudio.com]*
+   ![Gambar 1: Tampilan halaman download di code.visualstudio.com](img/download_vscode.png)
 
 3. Jalankan file installer yang sudah terdownload (mis. `VSCodeUserSetup-x64-x.xx.x.exe` untuk Windows).
 4. Ikuti proses instalasi:
    - Centang **"I accept the agreement"**, klik **Next**
    - Biarkan lokasi instalasi default, klik **Next**
 
-     *[Gambar 2: Halaman lisensi dan lokasi instalasi]*
+
    - Pada halaman **Select Additional Tasks**, disarankan mencentang:
      - ☑ *Add "Open with Code" action to Windows Explorer file context menu*
      - ☑ *Add to PATH*
 
-     *[Gambar 3: Halaman Select Additional Tasks]*
 5. Klik **Install**, tunggu hingga selesai, lalu klik **Finish** (biarkan opsi *Launch Visual Studio Code* tetap tercentang).
-6. VSCode akan terbuka otomatis. Kamu akan melihat halaman **Welcome** seperti ini:
-
-   *[Gambar 4: Tampilan awal VSCode setelah instalasi (halaman Welcome)]*
+6. VSCode akan terbuka otomatis. Kamu akan melihat halaman **Welcome**.
 
 > ✅ **Checkpoint:** Jika VSCode berhasil terbuka tanpa pesan error, instalasi tahap ini sudah berhasil. Lanjut ke langkah berikutnya.
 
@@ -81,21 +78,19 @@ Sebelum mulai, pastikan laptop/PC kamu memenuhi hal berikut:
 
 1. Di VSCode, klik ikon **Extensions** pada sidebar kiri (ikon berbentuk kotak-kotak kecil), atau tekan `Ctrl+Shift+X`.
 
-   *[Gambar 5: Lokasi ikon Extensions pada sidebar kiri VSCode]*
+   ![Gambar 5: Lokasi ikon Extensions pada sidebar kiri VSCode](img/vscode_extensions_icon.png)
 
 2. Ketik **"PlatformIO IDE"** pada kotak pencarian.
 3. Pastikan kamu memilih ekstensi resmi yang dipublikasikan oleh **PlatformIO** (biasanya muncul paling atas, ada logo semut 🐜). Klik **Install**.
 
-   *[Gambar 6: Hasil pencarian "PlatformIO IDE" di Extensions Marketplace]*
+   ![Gambar 6: Hasil pencarian "PlatformIO IDE" di Extensions Marketplace](img/pencarian_platformio_ide.png)
 
 4. Tunggu proses instalasi. Ini membutuhkan waktu **beberapa menit** karena PlatformIO akan mengunduh komponen tambahan (Python, PlatformIO Core, dsb.) secara otomatis di latar belakang. Pastikan koneksi internet tetap stabil selama proses ini.
-
-   *[Gambar 7: Progress bar instalasi PlatformIO Core di bagian bawah VSCode]*
 
 5. Setelah selesai, VSCode biasanya meminta untuk **reload/restart window**. Klik tombol tersebut jika muncul.
 6. Setelah VSCode terbuka kembali, kamu akan melihat ikon baru berbentuk **semut/kepala alien 🐜** pada sidebar kiri — itu adalah ikon PlatformIO.
 
-   *[Gambar 8: Ikon PlatformIO pada sidebar kiri VSCode setelah instalasi berhasil]*
+   ![Gambar 8: Ikon PlatformIO pada sidebar kiri VSCode setelah instalasi berhasil](img/ikon_platformio_sidebar.png)
 
 > ⚠️ **Catatan:** Jangan menutup VSCode secara paksa selama proses instalasi PlatformIO Core berlangsung (biasanya ditandai dengan progress bar di bagian bawah/kanan bawah jendela). Tunggu sampai benar-benar selesai.
 
@@ -106,7 +101,7 @@ Sebelum mulai, pastikan laptop/PC kamu memenuhi hal berikut:
 1. Klik ikon PlatformIO (semut) pada sidebar kiri.
 2. Klik **"Open"** atau **"PIO Home"** untuk membuka halaman utama PlatformIO.
 
-   *[Gambar 9: Tampilan PlatformIO Home — menu New Project, Import Project, Projects, Boards, dsb.]*
+   ![Gambar 9: Tampilan PlatformIO Home — menu New Project, Import Project, Projects, Boards, dsb.](img/platformio_home.png)
 
 Halaman **PlatformIO Home** ini akan sering kamu gunakan sepanjang praktikum, terutama untuk membuat project baru dan membuka project yang sudah ada.
 
@@ -116,8 +111,6 @@ Halaman **PlatformIO Home** ini akan sering kamu gunakan sepanjang praktikum, te
 
 1. Pada PlatformIO Home, klik tombol **"+ New Project"**.
 
-   *[Gambar 10: Tombol "+ New Project" pada PlatformIO Home]*
-
 2. Isi form yang muncul:
    - **Name:** nama project (bebas, contoh: `percobaan-blink`)
    - **Board:** ketik nama board yang dipakai. Contoh:
@@ -126,11 +119,9 @@ Halaman **PlatformIO Home** ini akan sering kamu gunakan sepanjang praktikum, te
    - **Framework:** pilih sesuai kebutuhan modul praktikum (mis. **Arduino** atau **STM32Cube**)
    - **Location:** biarkan default, atau tentukan folder pilihanmu sendiri (matikan toggle "Use default location" jika ingin memilih lokasi lain)
 
-   *[Gambar 11: Form New Project dengan contoh pengisian Name, Board, dan Framework]*
+   ![Gambar 11: Form New Project dengan contoh pengisian Name, Board, dan Framework](img/form_new_project.png)
 
-3. Klik **Finish**. Tunggu beberapa saat — PlatformIO akan otomatis mengunduh package board/framework yang dibutuhkan jika belum tersedia di komputermu.
-
-   *[Gambar 12: Progress pembuatan project baru]*
+3. Klik **Finish**. Tunggu beberapa saat — PlatformIO akan otomatis mengunduh package board/framework yang dibutuhkan jika belum tersedia di komputermu. Pastikan komputermu tersambung ke Internet.
 
 4. Setelah selesai, VSCode akan otomatis membuka folder project yang baru dibuat.
 
@@ -154,7 +145,7 @@ nama-project/
 └── platformio.ini   <- FILE KONFIGURASI project (board, framework, library, dst.)
 ```
 
-*[Gambar 13: Panel Explorer VSCode menampilkan struktur folder project di atas]*
+![Gambar 13: Panel Explorer VSCode menampilkan struktur folder project di atas](img/struktur_folder_project.png)
 
 Dua file yang **paling sering kamu sentuh** selama praktikum:
 - **`src/main.cpp`** — tempat kamu menulis kode program (`setup()`, `loop()`, dst.)
@@ -176,7 +167,7 @@ Perhatikan **status bar** di bagian **paling bawah** jendela VSCode (garis biru)
 | 🗑 (tempat sampah) | **Clean** | Membersihkan hasil build sebelumnya (berguna jika terjadi error aneh setelah banyak perubahan) |
 | 🏠 (rumah) | **PIO Home** | Kembali ke halaman PlatformIO Home |
 
-*[Gambar 14: Status bar VSCode dengan panah penunjuk ke masing-masing ikon di atas]*
+![Gambar 14: Status bar VSCode dengan panah penunjuk ke masing-masing ikon di atas](img/status_bar_vscode.png)
 
 > 💡 **Tips:** Kamu juga bisa menjalankan perintah-perintah di atas lewat menu **Command Palette** (`Ctrl+Shift+P`), lalu ketik "PlatformIO: Upload" atau "PlatformIO: Build".
 
@@ -197,7 +188,7 @@ STM32 Blackpill tidak bisa diprogram langsung lewat kabel USB — dibutuhkan ala
 2. Buat akun gratis (jika diminta), lalu unduh driver **STSW-LINK009**.
 3. Jalankan installer, ikuti instruksi sampai selesai.
 
-   *[Gambar 15: Halaman download STSW-LINK009 di situs ST]*
+   ![Gambar 15: Halaman download STSW-LINK009 di situs ST](img/download_stlink_driver.png)
 
 ### 9.2 Driver untuk ESP32 (USB-to-Serial)
 
@@ -213,13 +204,13 @@ https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers
 https://www.wch-ic.com/downloads/CH341SER_ZIP.html
 ```
 
-*[Gambar 16: Contoh penanda chip CP2102/CH340 pada board ESP32 — biasanya berbentuk chip kecil persegi di dekat port USB]*
+![Gambar 16: Contoh penanda chip CP2102/CH340 pada board ESP32 — biasanya berbentuk chip kecil persegi di dekat port USB](img/chip_cp2102_ch340.png)
 
 1. Unduh driver sesuai chip yang terdeteksi.
 2. Ekstrak file (jika berbentuk .zip), lalu jalankan installer di dalamnya.
 3. Ikuti instruksi sampai selesai.
 
-   *[Gambar 17: Contoh tampilan installer driver CP2102/CH340]*
+   ![Gambar 17: Contoh tampilan installer driver CP2102/CH340](img/installer_driver_cp2102.png)
 
 4. **Restart laptop/PC** setelah instalasi driver selesai, agar sistem operasi mengenali driver baru dengan sempurna.
 
@@ -251,16 +242,16 @@ Setelah semua langkah di atas selesai, mari kita uji apakah semuanya sudah berja
 
 4. Klik ikon **Upload (→)** pada status bar.
 
-   *[Gambar 18: Proses upload berjalan di terminal bawah VSCode]*
+   ![Gambar 18: Proses upload berjalan di terminal bawah VSCode](img/proses_upload_terminal.png)
 
 5. Tunggu proses **Building** dan **Uploading** selesai. Jika berhasil, akan muncul tulisan seperti `[SUCCESS]` di terminal.
 
-   *[Gambar 19: Pesan SUCCESS setelah proses upload selesai]*
+   ![Gambar 19: Pesan SUCCESS setelah proses upload selesai](img/pesan_success_upload.png)
 
 6. Klik ikon **Serial Monitor (🔌)**, pastikan baud rate di pojok kanan bawah terminal diatur ke **115200** (sesuai `Serial.begin(115200)` pada kode).
 7. Kamu akan melihat tulisan "Halo, PlatformIO berhasil disetup!" muncul di layar, diikuti "Program berjalan..." setiap 1 detik.
 
-   *[Gambar 20: Tampilan Serial Monitor menampilkan output program]*
+   ![Gambar 20: Tampilan Serial Monitor menampilkan output program](img/serial_monitor_output.png)
 
 > 🎉 **Selamat!** Jika kamu berhasil sampai ke sini, artinya VSCode dan PlatformIO sudah siap digunakan untuk seluruh modul praktikum.
 
